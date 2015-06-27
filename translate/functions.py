@@ -38,7 +38,7 @@ def from_osu_time_notation(time_string):
     """
     Transform from the osu! time notation to a time in milliseconds
     :param time_string: String to convert from
-    :return: Time in milliseconds. Returns -1 on failure.
+    :return: Time in milliseconds. Raises ValueError on failure.
     """
     from re import match
 
@@ -55,3 +55,8 @@ def from_osu_time_notation(time_string):
     else:
         raise ValueError("Not a valid osu! time notation string!")
 
+def mult_to_sv(mult):
+    return -100 / mult
+
+def sv_to_mult(sv):
+    return -100 / mult

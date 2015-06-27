@@ -1,4 +1,4 @@
-__author__ = 'PAVILION'
+__author__ = 'Agka'
 
 def sv_effect(start, time_per_cycle, effect, divisions_per_cycle=1, cycle_cnt=1):
     """
@@ -38,9 +38,40 @@ def sv_effect(start, time_per_cycle, effect, divisions_per_cycle=1, cycle_cnt=1)
         effects.append((end, effect(1)))
     return effects
 
-def sv_lerp(start_time, end_time, start_sv, end_sv, steps):
+def sv_lerp(start_time, end_time, start_sv, end_sv, steps, ease=lambda x: x):
+    """
+    Returns a list of (time, value) pairs that lerps from start to finish in a number of steps
+    :param start_time: Starting time for the accel effect.
+    :param end_time: Ending time for the accel effect.
+    :param start_sv: Start SV for the accel effect.
+    :param end_sv: End SV for the accel effect.
+    :param steps: Amount of points to place a SV in.
+    :param ease: A function that eases the 0->1 mapping somehow.
+    :return: List of (time, value) pairs.
+    """
     duration = end_time - start_time
 
     def lerp_func(x):
-        return start_sv + (end_sv - start_sv) * x
+        return start_sv + (end_sv - start_sv) * ease(x)
     return sv_effect(start_time, duration, lerp_func, steps)
+
+def sv_normalize(timing_points, bpm):
+    """
+    Get timing point values for inherited points which make the input timing points to a speed that looks
+    like it is at the specified bpm.
+    :param timing_points: Timing points input. Must be a TimingPoint iterable collection.
+    :param bpm: BPM to make the uninherited timing points look as.
+    :return: A list of (time, value) pairs that acomplish this task.
+    """
+
+    # TODO: Make the algorithm also normalize SV changes to preserve (or not) their multipliers
+    from objects import TimingPoint
+    import translate
+    output = []
+    for tp in timing_points:
+        assert tp is TimingPoint
+        if tp.uninherited:
+            normalized_value = translate.mult_to_sv(bpm / translate.bpm_from_beatspace(tp.value))
+            output.append((tp.time, normalized_value))
+
+    return output

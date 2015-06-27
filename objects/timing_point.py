@@ -6,7 +6,7 @@ class TimingPoint(object):
     """ Timing point class that contains the relevant osu! information such as
         time, value, inherited, etc... """
 
-    def __init__(self, time=-1, value=0, beats_per_measure=4, inherited=False, sample_set=SampleSet()):
+    def __init__(self, time=-1, value=0, beats_per_measure=4, uninherited=False, sample_set=SampleSet()):
         """
         Construct a Timing Point object.
         :param time: Time in milliseconds of the current timing point.
@@ -19,7 +19,7 @@ class TimingPoint(object):
         self.time = time
         """ Time in milliseconds for this timing point """
 
-        self.uninherited = inherited
+        self.uninherited = uninherited
         """ Whether the timing point is inherited """
 
         self.sample_set = sample_set
