@@ -16,7 +16,7 @@ class Beatmap(object):
         """ A list containing all objects for this osu! osufile. """
 
         self.metadata = lambda: None
-        """ Metadata for this beatmap. Does not follow python conventions!
+        """ Metadata for this beatmap. Does not follow python naming conventions!
          It's a 1:1 mapping of attributes from the [Metadata] section.
          This means you can use this as self.metadata.AudioFilename and so on.
          """
@@ -63,36 +63,35 @@ class Beatmap(object):
         :return: the beatmap object
         """
         output = Beatmap()
-        in_file = open(filename)
-
-        current_section = "version"
-        section_regex = re.compile(r'^\[(.*)\]$')
-        section_dict = {}
-        for line in in_file:
-            line = line.rstrip()
-            # Read the version.
-            if current_section == "version":
-                match = re.match("osu file format v(\d+)", line)
-                output.version = int(match.group(1))
-                current_section = "null"
-                continue
-
-            # See if we're changing the current reading section
-            section_match = section_regex.match(line)
-            if section_match is not None: # Yes, we are
-                current_section = section_match.group(1)
-                section_dict[current_section] = []
-                continue
-            elif current_section != "null":  # No, we are not
+        with open(filename) as in_file:
+            current_section = "version"
+            section_regex = re.compile(r'^\[(.*)\]$')
+            section_dict = {}
+            for line in in_file:
                 line = line.rstrip()
-                if len(line) > 0:
-                    section_dict[current_section].append(line)
+                # Read the version.
+                if current_section == "version":
+                    match = re.match("osu file format v(\d+)", line)
+                    output.version = int(match.group(1))
+                    current_section = "null"
+                    continue
 
-        for section in section_dict:
-            if section == "TimingPoints":
-                for x in section_dict[section]: Beatmap.read_timing(output, x)
-            if section == "General":
-                for x in section_dict[section]: Beatmap.read_attributes(output.general, x)
-            if section == "Metadata":
-                for x in section_dict[section]: Beatmap.read_attributes(output.metadata, x)
+                # See if we're changing the current reading section
+                section_match = section_regex.match(line)
+                if section_match is not None: # Yes, we are
+                    current_section = section_match.group(1)
+                    section_dict[current_section] = []
+                    continue
+                elif current_section != "null":  # No, we are not
+                    line = line.rstrip()
+                    if len(line) > 0:
+                        section_dict[current_section].append(line)
+
+            for section in section_dict:
+                if section == "TimingPoints":
+                    for x in section_dict[section]: Beatmap.read_timing(output, x)
+                if section == "General":
+                    for x in section_dict[section]: Beatmap.read_attributes(output.general, x)
+                if section == "Metadata":
+                    for x in section_dict[section]: Beatmap.read_attributes(output.metadata, x)
         return output
