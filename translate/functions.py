@@ -24,7 +24,11 @@ def to_osu_time_notation(time):
     :param time: Time in milliseconds to convert.
     :return: The string representation of the time.
     """
-    time = int(time)
+    try:
+        time = int(time)
+    except:
+        raise ValueError("Invalid parameter. Expected convertable to int.")
+
     minutes = int(time/60000)
     millisecs = int(time % 1000)
     seconds = int((time - minutes * 60000 - millisecs) / 1000)
@@ -37,12 +41,17 @@ def from_osu_time_notation(time_string):
     :return: Time in milliseconds. Returns -1 on failure.
     """
     from re import match
-    time_match = match("(\d{2,}):(\d\d):(\d\d\d)", time_string)
+
+    try:
+        time_match = match("(\d{2,}):(\d\d):(\d\d\d)", time_string)
+    except:
+        raise ValueError("Invalid parameter")
+
     if time_match is not None:
         mins = int(time_match.group(1))
         secs = int(time_match.group(2))
         millisecs = int(time_match.group(3))
         return mins * 60000 + secs * 1000 + millisecs
     else:
-        return -1
+        raise ValueError("Not a valid osu! time notation string!")
 
