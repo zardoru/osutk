@@ -2,7 +2,7 @@ __author__ = 'Agka'
 
 import re
 
-from objects import TimingPoint, SampleSet
+from objects import TimingPoint
 
 class Beatmap(object):
     def __init__(self):
@@ -10,10 +10,10 @@ class Beatmap(object):
         # missing: Metadata, version, mode, etcetera
 
         self.timing_points = []
-        """ A list containing all timing points for this osu! file. """
+        """ A list containing all timing points for this osu! osufile. """
 
         self.objects = []
-        """ A list containing all objects for this osu! file. """
+        """ A list containing all objects for this osu! osufile. """
 
         self.metadata = lambda: None
         """ Metadata for this beatmap. Does not follow python conventions!
@@ -32,24 +32,33 @@ class Beatmap(object):
         """
         return self.metadata.Tags.split(" ")
 
+    def get_mode(self):
+        """
+        Return a string representation of the mode this beatmap is for.
+        :return: The mode.
+        """
+        modes = ("standard", "taiko", "ctb", "mania")
+        return modes[int(self.general.Mode)]
+
     @staticmethod
     def read_timing(beatmap, line):
-        beatmap.timing_points.append(TimingPoint.from_string(line))
+        beatmap.timing_points.append(TimingPoint.from_string(None, line))
 
     @staticmethod
     def read_attributes(area, line):
         line = line.split(":")
-        attribute = line[0].trim() if len(line) > 0 else None
-        value = line[1].trim() if len(line) > 1 else None
+        attribute = line[0].strip() if len(line) > 0 else None
+        value = line[1].strip() if len(line) > 1 else None
 
         # turn metadata into python attributes; attribute: value
-        setattr(area, attribute, value)
+        if attribute is not None and value is not None:
+            setattr(area, attribute, value)
         pass
 
     @staticmethod
     def read_from_file(self, filename):
         """
-        Read a osu! beatmap from a file.
+        Read a osu! beatmap from a osufile.
         :param filename:
         :return: the beatmap object
         """
@@ -60,9 +69,11 @@ class Beatmap(object):
         section_regex = re.compile(r'^\[(.*)\]$')
         section_dict = {}
         for line in in_file:
+            line = line.rstrip()
             # Read the version.
             if current_section == "version":
-                output.version = int(re.match(line, "osu file format v(\d+)").group(1))
+                match = re.match("osu file format v(\d+)", line)
+                output.version = int(match.group(1))
                 current_section = "null"
                 continue
 
@@ -72,9 +83,10 @@ class Beatmap(object):
                 current_section = section_match.group(1)
                 section_dict[current_section] = []
                 continue
-            else: # No, we are not
+            elif current_section != "null":  # No, we are not
                 line = line.rstrip()
-                section_dict[current_section].append(line)
+                if len(line) > 0:
+                    section_dict[current_section].append(line)
 
         for section in section_dict:
             if section == "TimingPoints":

@@ -1,4 +1,4 @@
-from objects import SampleSet
+from objects.sampleset import SampleSet
 
 __author__ = 'Agka'
 
@@ -19,7 +19,7 @@ class TimingPoint(object):
         self.time = time
         """ Time in milliseconds for this timing point """
 
-        self.inherited = inherited
+        self.uninherited = inherited
         """ Whether the timing point is inherited """
 
         self.sample_set = sample_set
@@ -42,7 +42,7 @@ class TimingPoint(object):
                                              self.sample_set.get_osu_kind_index(),
                                              self.sample_set.custom_set,
                                              self.sample_set.volume,
-                                             self.inherited)
+                                             self.uninherited)
 
     @staticmethod
     def from_string(self, string):
@@ -69,5 +69,5 @@ class TimingPoint(object):
             elif x == 5:
                 output.sample_set.volume = tp[x]
             elif x == 6:
-                output.inherited = tp[x]
+                output.uninherited = 1 if tp[x] != 0 else 0
         return output
