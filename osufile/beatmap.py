@@ -4,6 +4,7 @@ import re
 
 from objects import TimingPoint
 
+
 class Beatmap(object):
     def __init__(self):
 
@@ -78,7 +79,7 @@ class Beatmap(object):
 
                 # See if we're changing the current reading section
                 section_match = section_regex.match(line)
-                if section_match is not None: # Yes, we are
+                if section_match is not None:  # Yes, we are
                     current_section = section_match.group(1)
                     section_dict[current_section] = []
                     continue
@@ -88,10 +89,11 @@ class Beatmap(object):
                         section_dict[current_section].append(line)
 
             for section in section_dict:
-                if section == "TimingPoints":
-                    for x in section_dict[section]: Beatmap.read_timing(output, x)
-                if section == "General":
-                    for x in section_dict[section]: Beatmap.read_attributes(output.general, x)
-                if section == "Metadata":
-                    for x in section_dict[section]: Beatmap.read_attributes(output.metadata, x)
+                for line in section_dict[section]:
+                    if section == "TimingPoints":
+                        Beatmap.read_timing(output, line)
+                    elif section == "General":
+                        Beatmap.read_attributes(output.general, line)
+                    elif section == "Metadata":
+                        Beatmap.read_attributes(output.metadata, line)
         return output
