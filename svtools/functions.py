@@ -37,3 +37,9 @@ def sv_effect(start, time_per_cycle, effect, divisions_per_cycle=1, cycle_cnt=1)
     if end not in effects:
         effects.append((end, effect(1)))
     return effects
+
+def sv_lerp(start_time, end_time, start_sv, end_sv, steps):
+    duration = end_time - start_time
+    def lerp_func(x):
+        return start_sv + (end_sv - start_sv) * x
+    return sv_effect(start_time, duration, lerp_func, steps)

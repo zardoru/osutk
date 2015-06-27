@@ -1,4 +1,4 @@
-from objects.sampleset import SampleSet
+from objects import SampleSet
 
 __author__ = 'Agka'
 

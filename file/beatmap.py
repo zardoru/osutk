@@ -1,7 +1,8 @@
 __author__ = 'Agka'
 
 import re
-from objects.timing_point import TimingPoint
+
+from objects import TimingPoint, SampleSet
 
 class Beatmap(object):
     def __init__(self):
