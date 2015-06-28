@@ -1,11 +1,12 @@
 from osutk.osufile import Beatmap
+import osutk.osufile.beatmap as beatmp
 import unittest
 
 __author__ = 'Agka'
 
 print("Attempting to load test1.osu.")
 beatmap = Beatmap()
-beatmap = beatmap.read_from_file(None, "maps/test1.osu")
+beatmap = beatmp.read_from_file("maps/test1.osu")
 
 
 class TestBeatmapLoading(unittest.TestCase):

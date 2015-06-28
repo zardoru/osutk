@@ -48,32 +48,32 @@ class TimingPoint(object):
                                                 self.uninherited,
                                                 self.kiai)
 
-    @staticmethod
-    def from_string(self, string):
-        """
-        Construct a timing point from a osu! TP string.
-        :param string: The string to build the TP from. osu! format.
-        :return: The new timing point.
-        """
-        output = TimingPoint()
-        tp = list(map(float, string.split(",")))
 
-        # This chain is important to prevent out-of-range errors.
-        for x in range(len(tp)):
-            if x == 0:
-                output.time = tp[x]
-            elif x == 1:
-                output.value = tp[x]
-            elif x == 2:
-                output.beats_per_measure = tp[x]
-            elif x == 3:
-                output.sample_set.set_kind_from_index(int(tp[x]))
-            elif x == 4:
-                output.sample_set.custom_set = int(tp[x])
-            elif x == 5:
-                output.sample_set.volume = tp[x]
-            elif x == 6:
-                output.uninherited = 1 if tp[x] != 0 else 0
-            elif x == 7:
-                output.kiai = 1 if tp[x] != 0 else 0
-        return output
+def from_string(string):
+    """
+    Construct a timing point from a osu! TP string.
+    :param string: The string to build the TP from. osu! format.
+    :return: The new timing point.
+    """
+    output = TimingPoint()
+    tp = list(map(float, string.split(",")))
+
+    # This chain is important to prevent out-of-range errors.
+    for x in range(len(tp)):
+        if x == 0:
+            output.time = tp[x]
+        elif x == 1:
+            output.value = tp[x]
+        elif x == 2:
+            output.beats_per_measure = tp[x]
+        elif x == 3:
+            output.sample_set.set_kind_from_index(int(tp[x]))
+        elif x == 4:
+            output.sample_set.custom_set = int(tp[x])
+        elif x == 5:
+            output.sample_set.volume = tp[x]
+        elif x == 6:
+            output.uninherited = 1 if tp[x] != 0 else 0
+        elif x == 7:
+            output.kiai = 1 if tp[x] != 0 else 0
+    return output
