@@ -2,7 +2,7 @@ __author__ = 'Agka'
 
 import re
 
-from objects import TimingPoint
+from ..objects import TimingPoint
 
 
 class Beatmap(object):

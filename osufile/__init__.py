@@ -1,3 +1,3 @@
 __author__ = 'Agka'
 
-from osufile.beatmap import Beatmap
+from .beatmap import Beatmap

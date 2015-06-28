@@ -1,3 +1,3 @@
 __author__ = 'Agka'
 
-from translate.functions import *
+from .functions import *

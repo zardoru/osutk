@@ -1,4 +1,4 @@
-from objects.sampleset import SampleSet
+from .sampleset import SampleSet
 
 __author__ = 'Agka'
 
@@ -6,7 +6,7 @@ class TimingPoint(object):
     """ Timing point class that contains the relevant osu! information such as
         time, value, inherited, etc... """
 
-    def __init__(self, time=-1, value=0, beats_per_measure=4, uninherited=False, sample_set=SampleSet(), kiai=0):
+    def __init__(self, time=-1, value=500, beats_per_measure=4, uninherited=1, sample_set=SampleSet(), kiai=0):
         """
         Construct a Timing Point object.
         :param time: Time in milliseconds of the current timing point.
