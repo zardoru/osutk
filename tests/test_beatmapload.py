@@ -27,10 +27,7 @@ class TestBeatmapLoading(unittest.TestCase):
         print("Testing that the first timing point has the correct value")
         self.assertEqual(beatmap.timing_points[0].value, 461.538461538462)
         self.assertEqual(beatmap.timing_points[0].time, 1708)
-        for x in beatmap.timing_points:
-            print("Timing point starting at {} with value {}".format(x.time,
-                                                                     round(translate.bpm_from_beatspace(x.value)
-                                                                           if x.uninherited else -100 / x.value, 2)))
+        print ("Kiai-enabled timing points: ", len(list(filter(lambda x: x.kiai != 0, beatmap.timing_points))))
 
 
 if __name__ == "__main__":

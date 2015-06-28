@@ -59,4 +59,4 @@ def mult_to_sv(mult):
     return -100 / mult
 
 def sv_to_mult(sv):
-    return -100 / mult
+    return -100 / sv

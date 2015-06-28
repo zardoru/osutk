@@ -6,7 +6,7 @@ class TimingPoint(object):
     """ Timing point class that contains the relevant osu! information such as
         time, value, inherited, etc... """
 
-    def __init__(self, time=-1, value=0, beats_per_measure=4, uninherited=False, sample_set=SampleSet()):
+    def __init__(self, time=-1, value=0, beats_per_measure=4, uninherited=False, sample_set=SampleSet(), kiai=0):
         """
         Construct a Timing Point object.
         :param time: Time in milliseconds of the current timing point.
@@ -31,18 +31,22 @@ class TimingPoint(object):
         self.beats_per_measure = beats_per_measure
         """ The beats per measure. Only valid when the TP is not inherited. """
 
+        self.kiai = kiai
+        """ Whether this TP is a kiai section. 1 for it is, 0 for it's not. """
+
     def __str__(self):
         """
         Get osu! representation of timing point.
         :return: osu! representation as string for this timing point
         """
-        return "{},{},{},{},{},{},{}".format(self.time,
-                                             self.value,
-                                             self.beats_per_measure,
-                                             self.sample_set.get_osu_kind_index(),
-                                             self.sample_set.custom_set,
-                                             self.sample_set.volume,
-                                             self.uninherited)
+        return "{},{},{},{},{},{},{},{}".format(self.time,
+                                                self.value,
+                                                self.beats_per_measure,
+                                                self.sample_set.get_osu_kind_index(),
+                                                self.sample_set.custom_set,
+                                                self.sample_set.volume,
+                                                self.uninherited,
+                                                self.kiai)
 
     @staticmethod
     def from_string(self, string):
@@ -70,4 +74,6 @@ class TimingPoint(object):
                 output.sample_set.volume = tp[x]
             elif x == 6:
                 output.uninherited = 1 if tp[x] != 0 else 0
+            elif x == 7:
+                output.kiai = 1 if tp[x] != 0 else 0
         return output
