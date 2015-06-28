@@ -1,6 +1,6 @@
 __author__ = 'Agka'
 
-from osutk.osufile import *
+from .osufile import *
 
 import osutk.objects
 import osutk.svtools

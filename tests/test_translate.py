@@ -1,4 +1,4 @@
-import translate
+import osutk.translate as translate
 import unittest
 
 __author__ = 'Agka'

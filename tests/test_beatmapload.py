@@ -1,6 +1,5 @@
-from osufile import Beatmap
+from osutk.osufile import Beatmap
 import unittest
-import translate
 
 __author__ = 'Agka'
 
