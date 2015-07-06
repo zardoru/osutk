@@ -2,8 +2,13 @@ __author__ = 'Agka'
 
 import re
 
-from ..objects import TimingPoint
 import osutk.objects.timing_point as timing_point
+
+class Color(object):
+    def __init__(self, r=255, g=255, b=255):
+        self.Red = r
+        self.Green = g
+        self.Blue = b
 
 
 class Beatmap(object):
@@ -16,6 +21,11 @@ class Beatmap(object):
 
         self.objects = []
         """ A list containing all objects for this osu! osufile. """
+
+        self.colors = {}
+        """ A dictionary containing the colors used on the beatmap.
+        Indices are numbers, meaning ComboN has as key N. Colors have the form Color.Red/Green/Blue
+        as bytes from range 0 to 255 when the map is valid. """
 
         self.metadata = lambda: None
         """ Metadata for this beatmap. Does not follow python naming conventions!
@@ -55,7 +65,13 @@ def read_attributes(area, line):
     # turn metadata into python attributes; attribute: value
     if attribute is not None and value is not None:
         setattr(area, attribute, value)
-    pass
+
+
+def read_color(colors, line):
+    match = re.match(
+        "\s*Combo(\d+)\s*:\s*(\d{0,3}),(\d{0,3}),(\d{0,3})\s*", line)
+    if match is not None:
+        colors[int(match.group(1))] = Color(r=int(match.group(2)), g=int(match.group(3)), b=int(match.group(4)))
 
 
 def read_from_file(filename):
@@ -97,4 +113,6 @@ def read_from_file(filename):
                     read_attributes(output.general, line)
                 elif section == "Metadata":
                     read_attributes(output.metadata, line)
+                elif section == "Colours" or section == "Colors":
+                    read_color(output.colors, line)
     return output
