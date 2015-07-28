@@ -59,17 +59,25 @@ class Command(object):
 
 class Origin(object):
     TopLeft = 'TopLeft'
+    TL = TopLeft
     TopCentre = 'TopCentre'
     TopCenter = 'TopCentre'
+    TC = TopCenter
     TopRight = 'TopRight'
+    TR = TopRight
     CentreLeft = 'CentreLeft'
     CenterLeft = 'CentreLeft'
+    CL = CenterLeft
     Center = 'Centre'
     Centre = 'Centre'
+    CC = Center
     BottomLeft = 'BottomLeft'
+    BL = BottomLeft
     BottomCentre = 'BottomCentre'
     BottomCenter = 'BottomCenter'
+    BC = BottomCenter
     BottomRight = 'BottomRight'
+    BR = BottomRight
 
 
 class Layer(object):
