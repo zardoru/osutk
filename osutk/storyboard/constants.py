@@ -74,7 +74,7 @@ class Origin(object):
     BottomLeft = 'BottomLeft'
     BL = BottomLeft
     BottomCentre = 'BottomCentre'
-    BottomCenter = 'BottomCenter'
+    BottomCenter = 'BottomCentre'
     BC = BottomCenter
     BottomRight = 'BottomRight'
     BR = BottomRight

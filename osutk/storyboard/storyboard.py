@@ -52,6 +52,13 @@ class SpriteEvent(object):
 
     def __str__(self):
         cmd = self.command
+        if cmd == Command.Fade:
+            dic = {'ease': self.ease,
+                   'start_time': self.start_time,
+                   'end_time': self.end_time,
+                   'sv': self.start_value,
+                   'ev': self.end_value}
+            return "F,{ease},{start_time},{end_time},{sv},{ev}".format(**dic)
         if cmd == Command.Move:
             dic = {'ease': self.ease,
                    'start_time': self.start_time,
@@ -191,7 +198,17 @@ class CommandList(object):
                                     end_value=[_ex, _ey]))
         return self
 
+    def fade(self, _ease, _st, _et, _sv, _ev):
+        self.add_event(create_event(Command.Fade,
+                                    ease=_ease,
+                                    start_time=_st,
+                                    end_time=_et,
+                                    start_value=_sv,
+                                    end_value=_ev))
+        return self
+
     def rotate(self, _ease, _st, _et, _sr, _er):
+
         self.add_event(create_event(Command.Rotate,
                                     ease=_ease,
                                     start_time=_st,
@@ -199,7 +216,6 @@ class CommandList(object):
                                     start_value=_sr,
                                     end_value=_er))
         return self
-
     def colour(self, _ease, _st, _et, _sr, _sg, _sb, _er, _eg, _eb):
         self.add_event(create_event(Command.Color,
                                     ease=_ease,
