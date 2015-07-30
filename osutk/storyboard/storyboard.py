@@ -50,7 +50,6 @@ class SpriteEvent(object):
         self.end_value = 0
         self.ease = Ease.Linear
 
-    @property
     def __str__(self):
         cmd = self.command
         if cmd == Command.Fade:
@@ -279,12 +278,13 @@ class Sprite(CommandList):
                'file': self.file,
                'sx': self.location[0],
                'sy': self.location[1]}
-        return 'Sprite,{layer},{origin},"{file}",{sx},{sy}\n'.format(**dic) + \
+        return 'Sprite,{layer},{origin},"{file}",{sx:.0f},{sy:.0f}\n'.format(**dic) + \
                "\n".join(["_" + str(x) for x in self._events])
 
 
 class Sample(object):
     def __init__(self, time, layer, file, volume):
+        Storyboard.add_sprite(self)
         self.file = file
         self.time = time
         self.layer = layer
