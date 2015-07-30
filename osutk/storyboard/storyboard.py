@@ -50,6 +50,7 @@ class SpriteEvent(object):
         self.end_value = 0
         self.ease = Ease.Linear
 
+    @property
     def __str__(self):
         cmd = self.command
         if cmd == Command.Fade:
@@ -58,7 +59,7 @@ class SpriteEvent(object):
                    'end_time': self.end_time,
                    'sv': self.start_value,
                    'ev': self.end_value}
-            return "F,{ease},{start_time},{end_time},{sv},{ev}".format(**dic)
+            return "F,{ease},{start_time:.0f},{end_time:.0f},{sv:.3f},{ev:.3f}".format(**dic)
         if cmd == Command.Move:
             dic = {'ease': self.ease,
                    'start_time': self.start_time,
@@ -67,7 +68,7 @@ class SpriteEvent(object):
                    'sy': self.start_value[1],
                    'ex': self.end_value[0],
                    'ey': self.end_value[1]}
-            return "M,{ease},{start_time},{end_time},{sx},{sy},{ex},{ey}".format(**dic)
+            return "M,{ease},{start_time:.0f},{end_time:.0f},{sx:.3f},{sy:.3f},{ex:.3f},{ey:.3f}".format(**dic)
         elif cmd == Command.MoveX:
             dic = {'ease': self.ease,
                    'start_time': self.start_time,
@@ -75,7 +76,7 @@ class SpriteEvent(object):
                    'sx': self.start_value,
                    'ex': self.end_value}
 
-            return "MX,{ease},{start_time},{end_time},{sx},{ex}".format(**dic)
+            return "MX,{ease},{start_time:.0f},{end_time:.0f},{sx:.3f},{ex:.3f}".format(**dic)
         elif cmd == Command.MoveY:
             dic = {'ease': self.ease,
                    'start_time': self.start_time,
@@ -83,14 +84,14 @@ class SpriteEvent(object):
                    'sy': self.start_value,
                    'ey': self.end_value}
 
-            return "MY,{ease},{start_time},{end_time},{sy},{ey}".format(**dic)
+            return "MY,{ease},{start_time:.0f},{end_time:.0f},{sy:.3f},{ey:.3f}".format(**dic)
         elif cmd == Command.Scale:
             dic = {'ease': self.ease,
                    'start_time': self.start_time,
                    'end_time': self.end_time,
                    'sv': self.start_value,
                    'ev': self.end_value}
-            return "S,{ease},{start_time},{end_time},{sv},{ev}".format(**dic)
+            return "S,{ease},{start_time:.0f},{end_time:.0f},{sv:.3f},{ev:.3f}".format(**dic)
         elif cmd == Command.VectorScale:
             dic = {'ease': self.ease,
                    'start_time': self.start_time,
@@ -99,36 +100,37 @@ class SpriteEvent(object):
                    'sy': self.start_value[1],
                    'ex': self.end_value[0],
                    'ey': self.end_value[1]}
-            return "V,{ease},{start_time},{end_time},{sx},{sy},{ex},{ey}".format(**dic)
+            return "V,{ease},{start_time:.0f},{end_time:.0f},{sx:.3f},{sy:.3f},{ex:.3f},{ey:.3f}".format(**dic)
         elif cmd == Command.Rotate:
             dic = {'ease': self.ease,
                    'start_time': self.start_time,
                    'end_time': self.end_time,
                    'sv': self.start_value,
                    'ev': self.end_value}
-            return "R,{ease},{start_time},{end_time},{sv},{ev}".format(**dic)
+            return "R,{ease},{start_time:.0f},{end_time:.0f},{sv:.3f},{ev:.3f}".format(**dic)
         elif cmd == Command.Color:
             dic = {'ease': self.ease,
                    'start_time': self.start_time,
                    'end_time': self.end_time,
                    'sr': self.start_value[0], 'sg': self.start_value[1], 'sb': self.start_value[2],
                    'er': self.end_value[0], 'er': self.end_value[1], 'eb': self.end_value[2]}
-            return "C,{ease},{start_time},{end_time},{sr},{sg},{sb},{er},{eg},{eb}".format(**dic)
+            return "C,{ease},{start_time:.0f},{end_time:.0f},{sr:.0f},{sg:.0f},{sb:.0f},{er:.0f},{eg:.0f},{eb:.0f}" \
+                .format(**dic)
         elif cmd == Command.FlipHorizontally:
             dic = {'ease': self.ease,
                    'start_time': self.start_time,
                    'end_time': self.end_time}
-            return "P,{ease},{start_time},{end_time},H".format(**dic)
+            return "P,{ease},{start_time:.0f},{end_time:.0f},H".format(**dic)
         elif cmd == Command.FlipVertically:
             dic = {'ease': self.ease,
                    'start_time': self.start_time,
                    'end_time': self.end_time}
-            return "P,{ease},{start_time},{end_time},V".format(**dic)
+            return "P,{ease},{start_time:.0f},{end_time:.0f},V".format(**dic)
         elif cmd == Command.MakeAdditive:
             dic = {'ease': self.ease,
                    'start_time': self.start_time,
                    'end_time': self.end_time}
-            return "P,{ease},{start_time},{end_time},A".format(**dic)
+            return "P,{ease},{start_time:.0f},{end_time:.0f},A".format(**dic)
 
 
 def create_event(command, **args):

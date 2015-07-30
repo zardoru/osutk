@@ -17,10 +17,9 @@ framerate = 30  # n visual frames per second
 sample_rate = 44100.0
 audioframes_per_videoframe = int(sample_rate / framerate)  # audio frames per video frame
 offset = 0
-max_scale = 0.5
-min_scale = 0.1
+max_scale = 0.55
 fade_threshold = 1000  # 1 sec
-fadeout_start = from_osu_time_notation("05:25:564 -  ")
+fadeout_start = from_osu_time_notation("04:33:750 - ")
 
 # internals ahead
 divisor = 1.0 / 0x7FFF
@@ -67,9 +66,10 @@ for x in sprites:
 def put_fft(octs, start, end):
     global prev_fft
     hmax = max(abs(min_power), abs(max_power))
+    # hmax = -min_power + max_power
     for n in range(len(octs)):
-        lerp_prev = (prev_fft[n]) / abs(hmax)
-        lerp_next = (octs[n]) / abs(hmax)
+        lerp_prev = max((prev_fft[n]) / abs(hmax), 0)
+        lerp_next = max((octs[n]) / abs(hmax), 0)
         sprites[n].vector_scale(Ease.Linear, int(start + offset), int(end + offset),
                                 0.4, lerp_prev * max_scale,
                                 0.4, lerp_next * max_scale)
@@ -133,7 +133,7 @@ with wave.open("input.wav") as wav:
             # get average power of bin
             range_len = upper_index[n] - lower_index[n]
             if range_len != 0:
-                for binv in range(lower_index[n], upper_index[n]+1):
+                for binv in range(lower_index[n], upper_index[n]):
                     if binv < len(fftval):
                         binavg += 20 * math.log10(fftval[binv] ** 2)
                 binavg /= float(range_len)
