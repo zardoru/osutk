@@ -1,24 +1,26 @@
 __author__ = 'Agka'
 
-# this code is terrible - and it doesn't even work
-# but I'm leaving it on the open for the record if I ever come back to it.
-
+import numpy
+import math
+import wave
 from osutk.storyboard import *
 from numpy.fft import fft, fftfreq
 from osutk.translate import *
 from struct import unpack
-import math
-import numpy
-import wave
 
-framerate = 60  # n visual frames per second
+octavecenters = [25, 31.5, 40, 50, 63, 80, 100, 125,
+                 160, 200, 315, 400, 500, 630, 800, 1000, 1250,
+                 1600, 2000, 2500, 3150, 4000, 5000, 6300, 8000,
+                 10000, 12500, 16000]
+
+framerate = 30  # n visual frames per second
 sample_rate = 44100.0
 audioframes_per_videoframe = int(sample_rate / framerate)  # audio frames per video frame
-objects = 20
-size = Screen.Width / objects
 offset = 0
-max_scale = 1
+max_scale = 0.5
 min_scale = 0.1
+fade_threshold = 1000  # 1 sec
+fadeout_start = from_osu_time_notation("05:25:564 -  ")
 
 # internals ahead
 divisor = 1.0 / 0x7FFF
@@ -26,26 +28,55 @@ apv = audioframes_per_videoframe  # alias
 frame_fft = []
 min_power = 0
 max_power = -10000000
+objects = len(octavecenters)
+size = Screen.Width / objects
 
+# Music precalculations.
 
-sprites = [Sprite(file="circle.png", location=[int(x*size + size / 2), int(Screen.Height + 20)], origin=Origin.BottomCenter)
+print("{} octave centers".format(objects))
+
+# Calculate upper and lower bounds of every octave.
+base_round = lambda val, base: int(base * round(float(val)/base))
+ftfq = [x for x in fftfreq(audioframes_per_videoframe, 1.0 / sample_rate)]
+difference = ftfq[1] - ftfq[0]
+
+upper_octaves = []
+lower_octaves = []
+for x in octavecenters:
+    upper_octaves.append(base_round(x * 2.0 ** (1.0 / (2.0 ** (1 / (2 * 3)))), difference))
+    lower_octaves.append(base_round(x / 2.0 ** (1.0 / (2.0 ** (1 / (2 * 3)))), difference))
+
+print("Octave bounds: {} {}".format(lower_octaves, upper_octaves))
+
+# Now we'll have the FFT frequencies for what we're getting from the audio.
+upper_index = [ftfq.index(x) if x in ftfq else len(ftfq)-1 for x in upper_octaves]
+lower_index = [ftfq.index(x) if x in ftfq else len(ftfq)-1 for x in lower_octaves]
+
+print("Octave indices: {} {}".format(lower_index, upper_index))
+
+# SB output
+sprites = [Sprite(file="circle.png", location=[int(x*size + size / 2), int(Screen.Height / 2)], origin=Origin.Center)
            for x in range(objects)]
 prev_fft = [0 for x in range(objects)]
 
 for x in sprites:
-    x.fade(Ease.Linear, 0, from_osu_time_notation("05:29:302 - "), 1, 1)
+    x.fade(Ease.Linear, 0, fadeout_start, 1, 1)
+    x.fade(Ease.Linear, fadeout_start, fadeout_start + fade_threshold, 1, 0)
+
 
 def put_fft(octs, start, end):
     global prev_fft
-    hmax = (-min_power + max_power)
+    hmax = max(abs(min_power), abs(max_power))
     for n in range(len(octs)):
-        lerp_prev = (prev_fft[n] - min_power) / abs(hmax)
-        lerp_next = (octs[n] - min_power) / abs(hmax)
+        lerp_prev = (prev_fft[n]) / abs(hmax)
+        lerp_next = (octs[n]) / abs(hmax)
         sprites[n].vector_scale(Ease.Linear, int(start + offset), int(end + offset),
-                                0.5, lerp_prev * max_scale,
-                                0.5, lerp_next * max_scale)
+                                0.4, lerp_prev * max_scale,
+                                0.4, lerp_next * max_scale)
 
     prev_fft = octs
+
+# FFT and Audio Processing
 
 def hamming(wnd):
     for i in range(len(wnd)):
@@ -53,17 +84,17 @@ def hamming(wnd):
 
 
 def average(bts):
-    # separate interleaved data
+    # separate interleaved data and normalize
     bts = unpack("%ih" % (len(bts) / 2), bts)
     left_ch = [v * divisor for v in bts[::2]]
     right_ch = [v * divisor for v in bts[1::2]]
 
     rt = []
     for u in range(len(left_ch)):
-        # average and normalize both channels into -1.0 <-> 1.0 space
+        # average both channels into -1.0 <-> 1.0 space
         rt.append((left_ch[u] + right_ch[u]) / 2)
 
-    return left_ch
+    return rt
 
 # assumptions: input.wav is stereo int16 data @ 44100Hz.
 with wave.open("input.wav") as wav:
@@ -74,22 +105,10 @@ with wave.open("input.wav") as wav:
                                                                 wav.getsampwidth(),
                                                                 wav.getframerate()))
 
-    ftfq = fftfreq(audioframes_per_videoframe, 1.0 / sample_rate)
     print("Frequencies: {} len: {}, max: {}".format(ftfq, len(ftfq), max(ftfq)))
     binlen = int(audioframes_per_videoframe / objects)
     print("avg bin size: {}".format(binlen))
 
-    binsizes = []
-    bin_frequencies = ftfq[1:(len(ftfq)/2)]
-    lenbf = len(bin_frequencies)
-    for x in range(objects):
-        avg = 0
-        for n in range(int(x * lenbf / objects), int((x+1) * lenbf / objects)):
-            avg += bin_frequencies[n]
-        avg /= float(lenbf)
-        binsizes.append(avg)
-
-    print("bin sizes for the objects: {}".format(binsizes))
     x = 0
     while x < duration:
         frames = wav.readframes(audioframes_per_videoframe)
@@ -103,31 +122,32 @@ with wave.open("input.wav") as wav:
         fftval = abs(fftval)
 
         unique_pts = len(fftval) / 2
-        l, r = fftval[unique_pts:], fftval[1:unique_pts]
-        # fftval = numpy.add(l, r[::-1])
-        fftval = r
+
+        r, l = fftval[unique_pts:], fftval[:unique_pts]
+        fftval = numpy.add(l, r[::-1])
         # get length of each point
 
         octs = []
-        binlen = int(len(fftval) / objects)
         for n in range(objects):
             binavg = 0
             # get average power of bin
-            try:
-                for binv in range(n * binlen, (n+1) * binlen):
-                    binavg += 10 * math.log10(fftval[binv] ** 2)
-                binavg /= float(binlen)
-            except IndexError:
-                print ("bin size {} for fft sized {}".format(binlen, len(fftval)))
+            range_len = upper_index[n] - lower_index[n]
+            if range_len != 0:
+                for binv in range(lower_index[n], upper_index[n]+1):
+                    if binv < len(fftval):
+                        binavg += 20 * math.log10(fftval[binv] ** 2)
+                binavg /= float(range_len)
 
-            # maximum changed?
-            if max_power < binavg or min_power > binavg:
-                print("amplitude changed: {}".format(binavg))
+                # maximum changed?
+                if max_power < binavg or min_power > binavg:
+                    print("amplitude changed: {}".format(binavg))
 
-            max_power = max(max_power, binavg)
-            min_power = min(min_power, binavg)
-            # add to set of bins this audio frame
-            octs.append(binavg)
+                max_power = max(max_power, binavg)
+                min_power = min(min_power, binavg)
+                # add to set of bins this audio frame
+                octs.append(binavg)
+            else:
+                raise ValueError("The framerate is too high for the frequency {} to be properly represented".format(n))
 
         # output to storyboard
         # add bins to fft analysis data
