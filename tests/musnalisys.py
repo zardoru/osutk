@@ -9,31 +9,46 @@ input_file = "input.wav"
 # File to output the OSB to.
 output_file = "fft.osb"
 
-# Pick the octave thirds centers to draw. One object per frequency. Adjust accordingly with framerate.
-octavecenters = [31.5, 63, 80, 100, 125,
-                 160, 200, 315, 400, 500, 630, 800, 1000, 1250,
-                 1600, 2000, 2500, 3150, 4000, 5000, 6300, 8000, 10000, 12500, 16000]
+# Whether to make the storyboard widescreen.
+widescreen = 1
 
 # How many frames per second to render the FFT.
-framerate = 30
+framerate = 20
 
 # Audio sampling rate. Adjust properly.
 sample_rate = 44100.0
 
 # How large can the objects grow
-max_scale = 0.55
+max_scale = 0.8
+
+# How small the objects should be at least
+min_scale = 0.1
+
+# Horizontal scale
+h_scale = 0.4
 
 # When to fade out (in ms) the objects.
-fadeout_start = from_osu_time_notation("04:32:695 - ")
+fadeout_start = from_osu_time_notation("01:42:220 - ")
 
 # For how long to fade out
-fade_threshold = 1000  # 1 sec
+fade_threshold = 5000  # 5 sec
+
+# Bar filename
+bar_fn = "bar.png"
+
+## Advanced
 
 # Whether to use the hann window on the samples
-use_window = 1
+use_window = 0
 
 # In the strange case your mp3 and your wav differ, adjust this. Otherwise leave as-is.
 offset = 0
+
+# repeat fft twice instead of reducing it
+symmetrical = 1
+
+# use center as low frequencies and edges as high if symmetrical
+sym_reverse = 1
 
 # INTERNALS
 ##############################################################################################
@@ -43,21 +58,36 @@ import wave
 from numpy.fft import fft, fftfreq
 from struct import unpack
 
+# Pick the octave thirds centers to draw. One object per requency. Adjust accordingly with framerate.
+octavecenters = [31.5, 40, 50, 63, 80, 100, 125,
+                 160, 200, 315, 400, 500, 630, 800, 1000, 1250,
+                 1600, 2000, 2500, 3150, 4000, 5000, 6300, 8000, 10000]
+
+if symmetrical:
+    if sym_reverse:
+        octavecenters = octavecenters[::-1] + octavecenters
+    else:
+        octavecenters = octavecenters + octavecenters[::-1]
+
 divisor = 1.0 / 0x7FFF
 frame_fft = []
 objects = len(octavecenters)
 min_power = [0 for x in octavecenters]
 max_power = [-10000000 for x in octavecenters]
-size = Screen.Width / objects
+if not widescreen:
+    size = Screen.Width / objects
+else:
+    size = Screen.WidthWidescreen / objects
+
 samples_per_frame = int(sample_rate / framerate)  # audio frames per video frame
 
 # Music precalculations.
 
-print("{} octave centers".format(objects))
+print("{} sub-octave centers".format(objects))
 
 # Calculate upper and lower bounds of every octave.
 base_round = lambda val, base: int(base * round(float(val)/base))
-fft_frequencies = [x for x in fftfreq(samples_per_frame, 1.0 / sample_rate)]
+fft_frequencies = [int(x) for x in fftfreq(samples_per_frame, 1.0 / sample_rate)]
 difference = fft_frequencies[1] - fft_frequencies[0]
 
 upper_octaves = [base_round(x * 2.0 ** (1.0 / (2.0 ** (1 / (2 * 3)))), difference) for x in octavecenters]
@@ -73,7 +103,11 @@ print("Octave indices: \n\tLow: {} \n\tHigh: {}".format(lower_index, upper_index
 
 # SB output. Adjust this if you'd rather have different parameters
 ###############################################################################
-sprites = [Sprite(file="circle.png", location=[int(x*size + size / 2), int(Screen.Height / 2)], origin=Origin.Center)
+x_offset = 0
+if widescreen:
+    x_offset = Screen.StartWidescreen
+
+sprites = [Sprite(file=bar_fn, location=[x*size + size / 2 + x_offset, Screen.Height], origin=Origin.BottomCenter)
            for x in range(objects)]
 
 # Fade out. Recommended that you adjust the parameters instead.
@@ -97,18 +131,13 @@ def put_fft(fft_tuples, start, end):
 
         # Do the vector scaling for the sprites.
         sprites[n].vector_scale(Ease.Linear, int(start + offset), int(end + offset),
-                                0.45, lerp_prev * max_scale,
-                                0.45, lerp_next * max_scale)
+                                h_scale, lerp_prev * (max_scale - min_scale) + min_scale,
+                                h_scale, lerp_next * (max_scale - min_scale) + min_scale)
 
     prev_fft = fft_tuples
 
 # FFT and Audio Processing
 ###############################################################################
-
-def hamming(wnd):
-    for i in range(len(wnd)):
-        wnd[i] *= 0.5 - 0.5 * math.cos(2 * math.pi * i / (len(wnd) - 1))
-
 
 def average(bts):
     # separate interleaved data and normalize
@@ -143,7 +172,8 @@ with wave.open(input_file) as wav:
         frames = average(frames)
 
         if use_window:
-            hamming(frames)
+            for i, x in enumerate(numpy.hanning(len(frames))):
+                frames[i] *= x
 
         if len(frames) == 0:
             print("read 0 frames D:")
@@ -152,8 +182,14 @@ with wave.open(input_file) as wav:
         fft_values = abs(fft_values)
 
         unique_pts = len(fft_values) / 2
-        l, r = numpy.split(fft_values, 2)
-        fft_values = numpy.add(l, r[::-1])
+        l, r = fft_values[:unique_pts], fft_values[unique_pts:]
+        if not symmetrical:  # use both sides of FFT
+            fft_values = l
+        else:
+            if sym_reverse:
+                fft_values = l[::-1] + l
+            else:
+                fft_values = l + l[::-1]
 
         octs = []
         for n in range(objects):
@@ -174,7 +210,8 @@ with wave.open(input_file) as wav:
                 # add to set of bins this audio frame
                 octs.append(binavg)
             else:
-                raise ValueError("The framerate is too high for the frequency {} to be properly represented".format(n))
+                raise ValueError("The framerate is too high for the frequency {} to be properly represented"\
+                                 .format(octavecenters[n]))
 
         # output to storyboard
         # add bins to fft analysis data

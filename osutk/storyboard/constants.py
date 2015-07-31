@@ -89,4 +89,8 @@ class Layer(object):
 
 class Screen(object):
     Width = 640
+    WidthWidescreen = 853
     Height = 480
+
+    StartWidescreen = -106
+    EndWidescreen = 746
