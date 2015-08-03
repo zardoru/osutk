@@ -30,7 +30,7 @@ def sv_effect(start, time_per_cycle, effect, divisions_per_cycle=1, cycle_cnt=1)
             if last_sv == new_sv:
                 continue
 
-            effects.append( (sv_time, new_sv) )
+            effects.append((sv_time, new_sv))
             last_sv = new_sv
 
     end = start + time_per_cycle * cycle_cnt
@@ -65,8 +65,8 @@ def sv_normalize(timing_points, bpm):
     """
 
     # TODO: Make the algorithm also normalize SV changes to preserve (or not) their multipliers
-    from objects import TimingPoint
-    import translate
+    from ..objects import TimingPoint
+    import osutk.translate as translate
     output = []
     for tp in timing_points:
         assert tp is TimingPoint

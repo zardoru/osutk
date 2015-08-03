@@ -1,5 +1,8 @@
 __author__ = 'Agka'
 
+# osu!tk + numpy based spectrum analyzer
+# generates osb with spectrum based off wav files
+
 from osutk.storyboard import *
 
 # File to open and do the analysis on. Note that python only has support for wav.
@@ -18,27 +21,27 @@ framerate = 30
 sample_rate = 44100.0
 
 # How large can the objects grow
-max_scale = 0.8
+max_scale = 0.6
 
 # How small the objects should be at least
-min_scale = 0.1
+min_scale = 0.0
 
 # Horizontal scale
 h_scale = 0.6
 
 # Origin of the bars
-bar_origin = Origin.BottomCenter
+bar_origin = Origin.Center
 
 # Location of the bars (y axis
-bar_loc = Screen.Height
+bar_loc = Screen.Height / 2
 
 # For how long to fade out
 fade_threshold = 500  # 0.5 sec
 
 # Bar filename
-bar_fn = "bar.png"
+bar_fn = "circle.png"
 
-## Advanced
+# Advanced
 
 # Whether to use the hann window on the samples
 use_window = 1
@@ -57,33 +60,36 @@ sym_reverse = 1
 from time import time
 import math
 import wave
+import numpy
 from numpy.fft import fft, fftfreq
 from struct import unpack
 
 process_time = time()
 
 # Pick the octave thirds centers to draw. One object per requency. Adjust accordingly with framerate.
-octavecenters = [50, 80, 100, 125,
+octave_third_centers = [50, 80, 100, 125,
                  160, 200, 315, 400, 500, 630, 800, 1000, 1250,
                  1600, 2000, 2500, 3150, 4000, 5000, 6300, 8000, 10000, 12500, 16000]
 
 if symmetrical:
     if sym_reverse:
-        octavecenters = octavecenters[::-1] + octavecenters
+        octave_third_centers = octave_third_centers[::-1] + octave_third_centers
     else:
-        octavecenters = octavecenters + octavecenters[::-1]
+        octave_third_centers = octave_third_centers + octave_third_centers[::-1]
 
 divisor = 1.0 / 0x7FFF
 frame_fft = []
-objects = len(octavecenters)
-min_power = [0 for x in octavecenters]
-max_power = [-10000000 for x in octavecenters]
+objects = len(octave_third_centers)
+min_power = [0] * objects
+max_power = [-10000000] * objects
+
 if not widescreen:
     size = Screen.Width / objects
 else:
     size = Screen.WidthWidescreen / objects
 
-samples_per_frame = int(sample_rate / framerate)  # audio frames per video frame
+# audio frames per video frame
+samples_per_frame = int(sample_rate / framerate)
 
 # Music precalculations.
 print("{} sub-octave centers".format(objects))
@@ -93,8 +99,8 @@ base_round = lambda val, base: int(base * round(float(val)/base))
 fft_frequencies = [int(x) for x in fftfreq(samples_per_frame, 1.0 / sample_rate)]
 difference = fft_frequencies[1] - fft_frequencies[0]
 
-upper_octaves = [base_round(x * (2.0 ** (1.0 / (2 * 3))), difference) for x in octavecenters]
-lower_octaves = [base_round(x / (2.0 ** (1.0 / (2 * 3))), difference) for x in octavecenters]
+upper_octaves = [base_round(x * (2.0 ** (1.0 / (2 * 3))), difference) for x in octave_third_centers]
+lower_octaves = [base_round(x / (2.0 ** (1.0 / (2 * 3))), difference) for x in octave_third_centers]
 
 print("Octave bounds: \n\tLow: {} \n\tHigh: {}".format(lower_octaves, upper_octaves))
 
@@ -108,21 +114,19 @@ print("Octave indices: \n\tLow: {} \n\tHigh: {}".format(lower_index, upper_index
 ###############################################################################
 
 def average(bts):
-    # separate interleaved s16 data and normalize
+    # separate interleaved s16 data, and then normalize to float
     bts = unpack("%ih" % (len(bts) / 2), bytes(bts))
     left_ch = [v * divisor for v in bts[::2]]
     right_ch = [v * divisor for v in bts[1::2]]
 
-    avg_amplitude = []
-    for u in range(len(left_ch)):
-        # average both channels into -1.0 <-> 1.0 space
-        avg_amplitude.append((left_ch[u] + right_ch[u]) / 2)
+    return numpy.multiply(numpy.add(left_ch, right_ch), 0.5)
 
-    return avg_amplitude
+# because it matters: this is -way- faster than getting
+# the window from numpy every single time.
+from numpy import hanning
 
 def apply_hanning_window(wnd):
-    for i in range(len(wnd)):
-        wnd[i] *= 0.5 - 0.5 * math.cos(2 * math.pi * i / (len(wnd) - 1))
+    return numpy.multiply(wnd, hanning(len(wnd)))
 
 def do_fft():
     # assumptions: input.wav is stereo int16 data @ 44100Hz.
@@ -138,24 +142,26 @@ def do_fft():
                                                                     wav.getframerate()))
 
         freq_center = len(fft_frequencies) // 2
-        print("Frequencies: {} len: {}, max: {}".format(fft_frequencies[:freq_center], freq_center, max(fft_frequencies)))
+        print("Frequencies: {} len: {}, max: {}".format(
+            fft_frequencies[:freq_center], freq_center, max(fft_frequencies)))
 
         current_frame = 0
         while current_frame < frames_total:
             frames = wav.readframes(samples_per_frame)
             frames = average(frames)
             if use_window:
-                apply_hanning_window(frames)
+                frames = apply_hanning_window(frames)
 
             if len(frames) == 0:
                 print("read 0 frames D:")
                 break
             fft_values = fft(frames)
-            fft_values = abs(fft_values)
+            fft_values = numpy.abs(fft_values)
 
             unique_pts = len(fft_values) / 2
-            l, r = fft_values[:unique_pts], fft_values[unique_pts:]
-            if not symmetrical:  # use both sides of FFT
+            # l, r = fft_values[:unique_pts], fft_values[unique_pts:]
+            l = fft_values[:unique_pts]
+            if not symmetrical:  # repeat FFT twice or not?
                 fft_values = l
             else:
                 if sym_reverse:
@@ -164,27 +170,25 @@ def do_fft():
                     fft_values = l + l[::-1]
 
             bins_this_frame = []
-            for bin in range(objects):
+            for fft_bin in range(objects):
                 bin_max = 0
-                # get average power of bin. first get the range of frequencies for this bin
-                range_len = upper_index[bin] - lower_index[bin]
+                range_len = upper_index[fft_bin] - lower_index[fft_bin]
                 if range_len != 0:
-                    for frequency_value in range(lower_index[bin], upper_index[bin]):
+                    for frequency_value in range(lower_index[fft_bin], upper_index[fft_bin]):
                         if frequency_value < len(fft_values):
                             bin_max = max(10 * math.log10(fft_values[frequency_value] ** 2), bin_max)
                     # There's several ways of doing this; raw amplitude, power, decibel scale
                     # you could take the average or the maximum, I settle for the max.
 
-                    max_power[bin] = max(max_power[bin], bin_max)
-                    min_power[bin] = min(min_power[bin], bin_max)
+                    max_power[fft_bin] = max(max_power[fft_bin], bin_max)
+                    min_power[fft_bin] = min(min_power[fft_bin], bin_max)
 
                     # add to set of bins this audio frame
                     bins_this_frame.append(bin_max)
                 else:
                     raise ValueError("The framerate is too high for the frequency {} to be properly represented"\
-                                     .format(octavecenters[bin]))
+                                     .format(octave_third_centers[fft_bin]))
 
-            # output to storyboard
             # add bins to fft analysis data
             frame_fft.append(((current_frame - samples_per_frame) * 1000 / wav.getframerate(),
                               current_frame * 1000 / wav.getframerate(), bins_this_frame))
@@ -196,7 +200,7 @@ def do_fft():
 ###############################################################################
 
 prev_fft = [0 for x in range(objects)]
-# FFT scaling. Don't touch this.
+# FFT scaling and output events. Don't touch this.
 def put_fft(fft_tuples, start, end):
     global prev_fft
 
@@ -204,6 +208,9 @@ def put_fft(fft_tuples, start, end):
     for n in range(len(fft_tuples)):
         if fft_tuples[n] == prev_fft[n]:
             continue  # don't be redundant.
+
+        # Uncommenting the next line means that each bin from the spectrum will
+        # instead of using the max. power in general, it'll use the max. power of this bin.
         # normal_amt = max_power[n]
         # Don't allow negative values. Normalize power to usable boundaries.
         lerp_prev = max((prev_fft[n]) / normal_amt, 0)
@@ -216,6 +223,8 @@ def put_fft(fft_tuples, start, end):
 
     prev_fft = fft_tuples
 
+
+# Now, everything's pretty much ready. Do it.
 do_fft()
 print("")
 print("Power: \n\tMin: {} \n\tMax: {}".format(min_power, max_power))

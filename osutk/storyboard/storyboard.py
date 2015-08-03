@@ -217,6 +217,7 @@ class CommandList(object):
                                     start_value=_sr,
                                     end_value=_er))
         return self
+
     def colour(self, _ease, _st, _et, _sr, _sg, _sb, _er, _eg, _eb):
         self.add_event(create_event(Command.Color,
                                     ease=_ease,
@@ -260,7 +261,7 @@ class SpriteEventLoop(CommandList):
 
 
 class Sprite(CommandList):
-    def __init__(self, layer=Layer.Background, origin=Origin.TopLeft, file="", location=[0, 0]):
+    def __init__(self, layer=Layer.Background, origin=Origin.TopLeft, file="", location=(0, 0)):
         CommandList.__init__(self)
 
         if file == "":
