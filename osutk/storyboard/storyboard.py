@@ -2,6 +2,10 @@ __author__ = 'Agka'
 
 from .constants import *
 
+# This function formats decimal storyboard values up to 3 decimals, removing
+# any pointless 0s and periods.
+def _fmt(val):
+    return ".3f".format(val).rstrip("0").rstrip(".")
 
 class Storyboard(object):
     _sprites = []
@@ -56,57 +60,57 @@ class SpriteEvent(object):
             dic = {'ease': self.ease,
                    'start_time': self.start_time,
                    'end_time': self.end_time,
-                   'sv': self.start_value,
-                   'ev': self.end_value}
-            return "F,{ease},{start_time:.0f},{end_time:.0f},{sv:.3f},{ev:.3f}".format(**dic)
+                   'sv': _fmt(self.start_value),
+                   'ev': _fmt(self.end_value)}
+            return "F,{ease},{start_time:.0f},{end_time:.0f},{sv},{ev}".format(**dic)
         if cmd == Command.Move:
             dic = {'ease': self.ease,
                    'start_time': self.start_time,
                    'end_time': self.end_time,
-                   'sx': self.start_value[0],
-                   'sy': self.start_value[1],
-                   'ex': self.end_value[0],
-                   'ey': self.end_value[1]}
-            return "M,{ease},{start_time:.0f},{end_time:.0f},{sx:.3f},{sy:.3f},{ex:.3f},{ey:.3f}".format(**dic)
+                   'sx': _fmt(self.start_value[0]),
+                   'sy': _fmt(self.start_value[1]),
+                   'ex': _fmt(self.end_value[0]),
+                   'ey': _fmt(self.end_value[1])}
+            return "M,{ease},{start_time:.0f},{end_time:.0f},{sx},{sy},{ex},{ey}".format(**dic)
         elif cmd == Command.MoveX:
             dic = {'ease': self.ease,
                    'start_time': self.start_time,
                    'end_time': self.end_time,
-                   'sx': self.start_value,
-                   'ex': self.end_value}
+                   'sx': _fmt(self.start_value),
+                   'ex': _fmt(self.end_value)}
 
-            return "MX,{ease},{start_time:.0f},{end_time:.0f},{sx:.3f},{ex:.3f}".format(**dic)
+            return "MX,{ease},{start_time:.0f},{end_time:.0f},{sx},{ex}".format(**dic)
         elif cmd == Command.MoveY:
             dic = {'ease': self.ease,
                    'start_time': self.start_time,
                    'end_time': self.end_time,
-                   'sy': self.start_value,
-                   'ey': self.end_value}
+                   'sy': _fmt(self.start_value),
+                   'ey': _fmt(self.end_value)}
 
-            return "MY,{ease},{start_time:.0f},{end_time:.0f},{sy:.3f},{ey:.3f}".format(**dic)
+            return "MY,{ease},{start_time:.0f},{end_time:.0f},{sy},{ey}".format(**dic)
         elif cmd == Command.Scale:
             dic = {'ease': self.ease,
                    'start_time': self.start_time,
                    'end_time': self.end_time,
-                   'sv': self.start_value,
-                   'ev': self.end_value}
-            return "S,{ease},{start_time:.0f},{end_time:.0f},{sv:.3f},{ev:.3f}".format(**dic)
+                   'sv': _fmt(self.start_value),
+                   'ev': _fmt(self.end_value)}
+            return "S,{ease},{start_time:.0f},{end_time:.0f},{sv},{ev}".format(**dic)
         elif cmd == Command.VectorScale:
             dic = {'ease': self.ease,
                    'start_time': self.start_time,
                    'end_time': self.end_time,
-                   'sx': self.start_value[0],
-                   'sy': self.start_value[1],
-                   'ex': self.end_value[0],
-                   'ey': self.end_value[1]}
-            return "V,{ease},{start_time:.0f},{end_time:.0f},{sx:.3f},{sy:.3f},{ex:.3f},{ey:.3f}".format(**dic)
+                   'sx': _fmt(self.start_value[0]),
+                   'sy': _fmt(self.start_value[1]),
+                   'ex': _fmt(self.end_value[0]),
+                   'ey': _fmt(self.end_value[1])}
+            return "V,{ease},{start_time:.0f},{end_time:.0f},{sx},{sy},{ex},{ey}".format(**dic)
         elif cmd == Command.Rotate:
             dic = {'ease': self.ease,
                    'start_time': self.start_time,
                    'end_time': self.end_time,
-                   'sv': self.start_value,
-                   'ev': self.end_value}
-            return "R,{ease},{start_time:.0f},{end_time:.0f},{sv:.3f},{ev:.3f}".format(**dic)
+                   'sv': _fmt(self.start_value),
+                   'ev': _fmt(self.end_value)}
+            return "R,{ease},{start_time:.0f},{end_time:.0f},{sv},{ev}".format(**dic)
         elif cmd == Command.Color:
             dic = {'ease': self.ease,
                    'start_time': self.start_time,
@@ -257,11 +261,28 @@ class SpriteEventLoop(CommandList):
 
     def __str__(self):
         dic = {'st': self.start_time, "lc": self.loops}
-        return "L,{st},{lc}\n".format(**dic) + "\n".join("__" + str(x) for x in self._events)
+        return "L,{st},{lc}\n".format(**dic) + "\n".join("  " + str(x) for x in self._events)
 
+    def loop(self, *args):
+        raise TypeError("A loop can not contain a loop.")
+
+    # Have a couple empty functions so we can allow the with sprite.loop() as l idiom
+    def __enter__(self):
+        return self
+
+    def __exit__(self, t, v, tb):
+        pass
 
 class Sprite(CommandList):
     def __init__(self, layer=Layer.Background, origin=Origin.TopLeft, file="", location=(0, 0)):
+        """
+        A sprite with only the raw osu! commands.
+        :param layer: Layer where to place it.
+        :param origin: Location to use as pivot.
+        :param file: File to use for sprite.
+        :param location: Initial location.
+        :return:
+        """
         CommandList.__init__(self)
 
         if file == "":
@@ -280,11 +301,34 @@ class Sprite(CommandList):
                'sx': self.location[0],
                'sy': self.location[1]}
         return 'Sprite,{layer},{origin},"{file}",{sx:.0f},{sy:.0f}\n'.format(**dic) + \
-               "\n".join(["_" + str(x) for x in self._events])
+               "\n".join([" " + str(x) for x in self._events])
 
+class ExtSprite(Sprite):
+    def __init__(self, layer=Layer.Background, origin=Origin.TopLeft, file="", location=(0, 0)):
+        """
+        A Sprite with more built-ins to play with than the standard commands.
+        :param layer: Layer where to place it.
+        :param origin: Location to use as pivot.
+        :param file: File to use for sprite.
+        :param location: Initial location.
+        :return:
+        """
+        # A sprite, except with more stuff.
+        Sprite.__init__(self, layer, origin, file, location)
+
+    def display(self, start_time, end_time):
+        self.fade(Ease.Linear, start_time, end_time, 1, 1)
 
 class Sample(object):
     def __init__(self, time, layer, file, volume):
+        """
+        An audio sample to play.
+        :param time:  When to play it.
+        :param layer: Play only on fail, pass, or always (bg/fg)
+        :param file: Audio file to play.
+        :param volume: Volume (0 to 100) to play the sound with.
+        :return:
+        """
         Storyboard.add_sprite(self)
         self.file = file
         self.time = time

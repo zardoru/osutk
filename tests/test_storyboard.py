@@ -11,4 +11,7 @@ l = Sprite(file="lol.png")
 
 l.loop(0, 10).scale(Ease.In, 0, 500, 1, 0.5).move_x(Ease.Linear, 500, 1000, 200, 400)
 
+with s.loop(0, 3) as sl:
+    sl.move_x(Ease.Linear, 0, 200, 0, 100)
+
 Storyboard.export()
