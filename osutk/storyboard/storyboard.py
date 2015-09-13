@@ -5,7 +5,7 @@ from .constants import *
 # This function formats decimal storyboard values up to 3 decimals, removing
 # any pointless 0s and periods.
 def _fmt(val):
-    return ".3f".format(val).rstrip("0").rstrip(".")
+    return "{:.3f}".format(float(val)).rstrip("0").rstrip(".")
 
 class Storyboard(object):
     _sprites = []
