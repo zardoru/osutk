@@ -1,8 +1,8 @@
 __author__ = 'Agka'
 
 import re
-
 import osutk.objects.timing_point as timing_point
+from osutk.objects.hitobject import HitObject
 
 class Color(object):
     def __init__(self, r=255, g=255, b=255):
@@ -37,25 +37,71 @@ class Beatmap(object):
         """ Same bindings as metadata, except for the [General] section.
         """
 
-    def get_tags(self):
+        self.difficulty = lambda: None
+        """
+        Same as before, except for the [Difficulty] section.
+        """
+
+    @property
+    def tags(self):
         """
         Get a list of tags from the metadata.
         :return: Tags.
         """
-        return self.metadata.Tags.split(" ")
+        return self.metadata.Tags.split()
 
-    def get_mode(self):
+    @property
+    def mode(self):
         """
         Return a string representation of the mode this beatmap is for.
+        :rtype : string
         :return: The mode.
         """
         modes = ("standard", "taiko", "ctb", "mania")
         return modes[int(self.general.Mode)]
 
+    def get_object_at_time(self, time):
+        """
+        Get the first declared hitobject at time.
+        :param time: Time to look for a hitobject.
+        :return: The HitObject.
+        """
+        for x in self.objects:
+            if x.time == time:
+                return x
+
+        return None
+
+    def get_objects_at_time(self, time):
+        """
+        Get list of objects that overlap at time.
+        :param time: Time to look for hitobjects.
+        :return: [HitObject]
+        """
+        ret = []
+        for x in self.objects:
+            if x.time == time:
+                ret.append(x)
+
+        return ret
+
+    def get_mania_lane(self, hitobject):
+        """
+        Given the beatmap's circle size, return the lane the object corresponds to.
+        The lane is given in the range of [0, Channels).
+        :return: The lane for an object given the beatmap properties.
+        """
+        lanes = int(self.difficulty.CircleSize)
+        lane_width = 512.0 / lanes
+        thresholds = [x * lane_width for x in range(1, lanes + 1)]
+        for i, x in enumerate(thresholds):
+            if hitobject.x < x:
+                return i
+
+        raise ValueError("The object's X (={}) is out of range.".format(hitobject.x))
 
 def read_timing(beatmap, line):
     beatmap.timing_points.append(timing_point.from_string(line))
-
 
 def read_attributes(area, line):
     line = line.split(":")
@@ -66,13 +112,15 @@ def read_attributes(area, line):
     if attribute is not None and value is not None:
         setattr(area, attribute, value)
 
-
 def read_color(colors, line):
     match = re.match(
         "\s*Combo(\d+)\s*:\s*(\d{0,3}),(\d{0,3}),(\d{0,3})\s*", line)
     if match is not None:
         colors[int(match.group(1))] = Color(r=int(match.group(2)), g=int(match.group(3)), b=int(match.group(4)))
 
+
+def read_hitobject(output_list, line):
+    output_list.append(HitObject.from_string(line))
 
 def read_from_file(filename):
     """
@@ -113,6 +161,10 @@ def read_from_file(filename):
                     read_attributes(output.general, line)
                 elif section == "Metadata":
                     read_attributes(output.metadata, line)
+                elif section == "Difficulty":
+                    read_attributes(output.difficulty, line)
                 elif section == "Colours" or section == "Colors":
                     read_color(output.colors, line)
+                elif section == "HitObjects":
+                    read_hitobject(output.objects, line)
     return output

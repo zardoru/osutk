@@ -21,25 +21,25 @@ framerate = 30
 sample_rate = 44100.0
 
 # How large can the objects grow
-max_scale = 0.6
+max_scale = 0.8
 
 # How small the objects should be at least
-min_scale = 0.0
+min_scale = 0.1
 
 # Horizontal scale
-h_scale = 0.6
+h_scale = 0.708333333333333333
 
 # Origin of the bars
-bar_origin = Origin.Center
+bar_origin = Origin.BC
 
 # Location of the bars (y axis
-bar_loc = Screen.Height / 2
+bar_loc = Screen.Height
 
 # For how long to fade out
 fade_threshold = 500  # 0.5 sec
 
 # Bar filename
-bar_fn = "circle.png"
+bar_fn = "bar.png"
 
 # Advanced
 
@@ -53,7 +53,7 @@ offset = 0
 symmetrical = 0
 
 # use center as low frequencies and edges as high if symmetrical
-sym_reverse = 1
+sym_reverse = 0
 
 # INTERNALS
 ##############################################################################################
