@@ -2,6 +2,9 @@ __author__ = 'Agka'
 
 
 class Ease(object):
+    """
+    Ease constants. For reference.
+    """
     Linear = 0
     Out = 1
     In = 2
@@ -39,6 +42,9 @@ class Ease(object):
 
 
 class Command(object):
+    """
+    Command types. For internal use.
+    """
     Fade = 1
     Move = 2
     MoveX = 3
@@ -58,6 +64,9 @@ class Command(object):
 
 
 class Origin(object):
+    """
+    Origin types. For brevity.
+    """
     TopLeft = 'TopLeft'
     TL = TopLeft
     TopCentre = 'TopCentre'
@@ -81,6 +90,9 @@ class Origin(object):
 
 
 class Layer(object):
+    """
+    Layer types. For brevity.
+    """
     Background = 'Background'
     Fail = 'Fail'
     Pass = 'Pass'
@@ -88,6 +100,9 @@ class Layer(object):
 
 
 class Screen(object):
+    """
+    Screen sizes and reference points.
+    """
     Width = 640
     WidthWidescreen = 853
     Height = 480

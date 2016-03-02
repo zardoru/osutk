@@ -8,14 +8,29 @@ def _fmt(val):
     return "{:.3f}".format(float(val)).rstrip("0").rstrip(".")
 
 class Storyboard(object):
+    """
+    Singleton instance of storyboard.
+    You can't make more than one storyboard per script
+    for the convenience of being able to not have to specify
+    what storyboard to add a sprite to.
+    """
+
     _sprites = []
 
     @staticmethod
     def add_sprite(sprite):
+        """
+        Add a sprite to the storyboard instance.
+         :param sprite: Storyboard sprite to add.
+        """
         Storyboard._sprites.append(sprite)
 
     @staticmethod
     def export(filename="output.osb"):
+        """
+        Export the storyboard to a file.
+         :param filename: File to export the storyboard to. By default it is 'output.osb'
+        """
         with open(filename, "w") as out:
             background_sprites = list(filter(lambda obj: obj.layer == Layer.Background, Storyboard._sprites))
             pass_sprites = list(filter(lambda obj: obj.layer == Layer.Pass, Storyboard._sprites))
@@ -137,6 +152,13 @@ class SpriteEvent(object):
 
 
 def create_event(command, **args):
+    """
+    Create an event with variable keywords and a type given by
+    the Commands enumeration class.
+    :param command: The command value as given by the Command class.
+    :param args: Keywords.
+    :return:
+    """
     evt = SpriteEvent(command)
     if 'start_time' in args:
         evt.start_time = args['start_time']
@@ -156,9 +178,25 @@ class CommandList(object):
         self._events = []
 
     def add_event(self, event):
+        """
+        Add an event outputted by create_event.
+         :param event: Event to add.
+         :return: None
+        """
         self._events.append(event)
 
     def move(self, _ease, _st, _et, _sx, _sy, _ex, _ey):
+        """
+        Move from point A to point B.
+         :param _ease: Easing.
+         :param _st: Start time.
+         :param _et: End time.
+         :param _sx: Start X.
+         :param _sy: Start Y.
+         :param _ex: End X.
+         :param _ey: End Y.
+         :return:
+        """
         self.add_event(create_event(Command.Move,
                                     ease=_ease,
                                     start_time=_st,
@@ -168,6 +206,15 @@ class CommandList(object):
         return self
 
     def move_x(self, _ease, _st, _et, _sx, _ex):
+        """
+        Move across the X axis.
+         :param _ease: Easing.
+         :param _st: Start time.
+         :param _et: End time.
+         :param _sx: Start X value.
+         :param _ex: End X value.
+         :return:
+        """
         self.add_event(create_event(Command.MoveX,
                                     ease=_ease,
                                     start_time=_st,
@@ -177,6 +224,15 @@ class CommandList(object):
         return self
 
     def move_y(self, _ease, _st, _et, _sy, _ey):
+        """
+        Move across the Y axis.
+         :param _ease: Easing.
+         :param _st: Start Time.
+         :param _et: End Time.
+         :param _sy: Start Y value.
+         :param _ey: End Y value.
+         :return: self
+        """
         self.add_event(create_event(Command.MoveY,
                                     ease=_ease,
                                     start_time=_st,
@@ -186,6 +242,15 @@ class CommandList(object):
         return self
 
     def scale(self, _ease, _st, _et, _ss, _es):
+        """
+        Simultaneous axis scaling. Grow X and Y by a factor.
+         :param _ease: Easing.
+         :param _st: Start time.
+         :param _et: End time.
+         :param _ss: Start scale.
+         :param _es: End scale.
+         :return: self
+        """
         self.add_event(create_event(Command.Scale,
                                     ease=_ease,
                                     start_time=_st,
@@ -195,6 +260,17 @@ class CommandList(object):
         return self
 
     def vector_scale(self, _ease, _st, _et, _sx, _sy, _ex, _ey):
+        """
+        Vector scaling. Independently grow X and Y axis by a factor of the original size.
+         :param _ease: Easing.
+         :param _st: Start time.
+         :param _et: End time.
+         :param _sx: Start X value.
+         :param _sy: Start Y value.
+         :param _ex: End X value.
+         :param _ey: End Y value.
+        :return: self
+        """
         self.add_event(create_event(Command.VectorScale,
                                     ease=_ease,
                                     start_time=_st,
@@ -204,6 +280,15 @@ class CommandList(object):
         return self
 
     def fade(self, _ease, _st, _et, _sv, _ev):
+        """
+        Fade from a value to another value (0 being fully transparent, 1 fully opaque)
+         :param _ease: Easing.
+         :param _st: Start time.
+         :param _et: End time.
+         :param _sv: Start fade value.
+         :param _ev: End fade value.
+         :return: self
+        """
         self.add_event(create_event(Command.Fade,
                                     ease=_ease,
                                     start_time=_st,
@@ -213,6 +298,15 @@ class CommandList(object):
         return self
 
     def rotate(self, _ease, _st, _et, _sr, _er):
+        """
+        Rotate from a value to another value in radians.
+         :param _ease: Easing.
+         :param _st: Start time.
+         :param _et: End time.
+         param _sr: Start rotation value.
+         :param _er: End rotation value.
+         :return:
+        """
 
         self.add_event(create_event(Command.Rotate,
                                     ease=_ease,
@@ -223,6 +317,9 @@ class CommandList(object):
         return self
 
     def colour(self, _ease, _st, _et, _sr, _sg, _sb, _er, _eg, _eb):
+        """
+        Same as color().
+        """
         self.add_event(create_event(Command.Color,
                                     ease=_ease,
                                     start_time=_st,
@@ -232,28 +329,72 @@ class CommandList(object):
         return self
 
     def color(self, _ease, _st, _et, _sr, _sg, _sb, _er, _eg, _eb):
+        """
+        Colorize from one RGB to a second RGB
+         :param _ease: Easing.
+         :param _st: Start time.
+         :param _et: End time.
+         :param _sr: Start red value.
+         :param _sg: Start green value.
+         :param _sb: Start blue value.
+         :param _er: End red value.
+         :param _eg: End green value.
+         :param _eb: End blue value.
+         :return: self
+        """
         self.colour(_ease, _st, _et, _sr, _sg, _sb, _er, _eg, _eb)
         return self
 
     def flip_horizontally(self, _st, _et):
+        """
+        Flip sprite horizontally for a specific duration.
+         :param _st: Start time.
+         :param _et: End time.
+         :return: self
+        """
+        self.add_event(create_event(Command.FlipVertically, start_time=_st, end_time=_et))
         self.add_event(create_event(Command.FlipHorizontally, start_time=_st, end_time=_et))
         return self
 
     def flip_vertically(self, _st, _et):
+        """
+        Flip sprite vertically for a specific duration.
+         :param _st: Start time.
+         :param _et: End time.
+         :return: self
+        """
         self.add_event(create_event(Command.FlipVertically, start_time=_st, end_time=_et))
         return self
 
     def additive(self, _st, _et):
+        """
+        Set additive mode for a specific duration.
+         :param _st: Start time.
+         :param _et: End time.
+         :return: self
+        """
         self.add_event(create_event(Command.MakeAdditive, start_time=_st, end_time=_et))
         return self
 
     def loop(self, _st, _lc):
+        """
+        Create a loop object.
+         :param _st: Start time.
+         :param _lc: Loop count.
+         :return: A SpriteEventLoop event chained to this object.
+        """
         return_loop = SpriteEventLoop(_st, _lc)
         self.add_event(return_loop)
         return return_loop
 
+    def join_sub_events(self):
+        return "\n".join(["\n".join(map(lambda x: "_" + x, str(x).split("\n"))) for x in self._events])
 
 class SpriteEventLoop(CommandList):
+    """
+    Loop events. Transforms parent sprite a number of times from a time.
+    Every loop's duration is the furthest end point of the events it contains.
+    """
     def __init__(self, start_time=0, loops=1):
         CommandList.__init__(self)
         self.start_time = start_time
@@ -261,10 +402,7 @@ class SpriteEventLoop(CommandList):
 
     def __str__(self):
         dic = {'st': self.start_time, "lc": self.loops}
-        return "L,{st},{lc}\n".format(**dic) + "\n".join("  " + str(x) for x in self._events)
-
-    def loop(self, *args):
-        raise TypeError("A loop can not contain a loop.")
+        return "L,{st},{lc}\n".format(**dic) + self.join_sub_events()
 
     # Have a couple empty functions so we can allow the with sprite.loop() as l idiom
     def __enter__(self):
@@ -276,12 +414,12 @@ class SpriteEventLoop(CommandList):
 class Sprite(CommandList):
     def __init__(self, layer=Layer.Background, origin=Origin.TopLeft, file="", location=(0, 0)):
         """
-        A sprite with only the raw osu! commands.
-        :param layer: Layer where to place it.
-        :param origin: Location to use as pivot.
-        :param file: File to use for sprite.
-        :param location: Initial location.
-        :return:
+A sprite with only the raw osu! commands.
+:param layer: Layer where to place it.
+:param origin: Location to use as pivot.
+:param file: File to use for sprite.
+:param location: Initial location.
+:return:
         """
         CommandList.__init__(self)
 
@@ -300,18 +438,18 @@ class Sprite(CommandList):
                'file': self.file,
                'sx': self.location[0],
                'sy': self.location[1]}
-        return 'Sprite,{layer},{origin},"{file}",{sx:.0f},{sy:.0f}\n'.format(**dic) + \
-               "\n".join([" " + str(x) for x in self._events])
+        events = self.join_sub_events()
+        return 'Sprite,{layer},{origin},"{file}",{sx:.0f},{sy:.0f}\n'.format(**dic) + events
 
 class ExtSprite(Sprite):
     def __init__(self, layer=Layer.Background, origin=Origin.TopLeft, file="", location=(0, 0)):
         """
-        A Sprite with more built-ins to play with than the standard commands.
-        :param layer: Layer where to place it.
-        :param origin: Location to use as pivot.
-        :param file: File to use for sprite.
-        :param location: Initial location.
-        :return:
+A Sprite with more built-ins to play with than the standard commands.
+ :param layer: Layer where to place it.
+ :param origin: Location to use as pivot.
+ :param file: File to use for sprite.
+ :param location: Initial location.
+ :return:
         """
         # A sprite, except with more stuff.
         Sprite.__init__(self, layer, origin, file, location)
@@ -322,12 +460,12 @@ class ExtSprite(Sprite):
 class Sample(object):
     def __init__(self, time, layer, file, volume):
         """
-        An audio sample to play.
-        :param time:  When to play it.
-        :param layer: Play only on fail, pass, or always (bg/fg)
-        :param file: Audio file to play.
-        :param volume: Volume (0 to 100) to play the sound with.
-        :return:
+An audio sample to play.
+ :param time:  When to play it.
+ :param layer: Play only on fail, pass, or always (bg/fg)
+ :param file: Audio file to play.
+ :param volume: Volume (0 to 100) to play the sound with.
+ :return:
         """
         Storyboard.add_sprite(self)
         self.file = file

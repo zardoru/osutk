@@ -1,12 +1,15 @@
-from osutk.osufile import Beatmap
-import osutk.osufile.beatmap as beatmp
+from osutk import Beatmap
+import osutk.osufile.beatmap as bm
 import unittest
 
 __author__ = 'Agka'
+beatmap = None
 
-print("Attempting to load test1.osu.")
-beatmap = Beatmap()
-beatmap = beatmp.read_from_file("maps/test1.osu")
+def setUpModule():
+    global beatmap
+    print("Attempting to load test1.osu.")
+    beatmap = Beatmap()
+    beatmap = bm.read_from_file("maps/test1.osu")
 
 
 class TestBeatmapLoading(unittest.TestCase):
@@ -49,9 +52,6 @@ class TestBeatmapLoading(unittest.TestCase):
 
         obj = beatmap.get_object_at_time(17054)
         self.assertEqual(obj.custom_sample, "hi.wav")
-
-
-
 
 if __name__ == "__main__":
     unittest.main()

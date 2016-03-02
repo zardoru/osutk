@@ -12,8 +12,8 @@ def bpm_from_beatspace(btsp):
     """
     Convert a beatspace to a BPM
     Provided as convenience; the operation is the same as bpm_to_beatspace.
-    :param btsp: beatspace to convert
-    :return: beatspace converted to BPM
+:param btsp: beatspace to convert
+:return: beatspace converted to BPM
     """
     return 60000.0 / btsp
 
@@ -21,13 +21,13 @@ def bpm_from_beatspace(btsp):
 def to_osu_time_notation(time):
     """
     Transform a time in milliseconds to a string with the osu! time notation.
-    :param time: Time in milliseconds to convert.
-    :return: The string representation of the time.
+:param time: Time in milliseconds to convert.
+:return: The string representation of the time.
     """
     try:
         time = int(time)
     except:
-        raise ValueError("Invalid parameter. Expected convertable to int.")
+        raise ValueError("Invalid parameter. Expected convertible to int.")
 
     minutes = int(time/60000)
     millisecs = int(time % 1000)
@@ -37,8 +37,8 @@ def to_osu_time_notation(time):
 def from_osu_time_notation(time_string):
     """
     Transform from the osu! time notation to a time in milliseconds
-    :param time_string: String to convert from
-    :return: Time in milliseconds. Raises ValueError on failure.
+:param time_string: String to convert from
+:return: Time in milliseconds. Raises ValueError on failure.
     """
     from re import match
 

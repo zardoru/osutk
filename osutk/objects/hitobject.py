@@ -7,6 +7,10 @@ class PlayingField(object):
 
 
 class HitObject(object):
+    """
+    The HitObject class is a base to all the other objects.
+    It contains constants and functions common to all objects.
+    """
     CIRCLE = 1
     SLIDER = 2
     NEW_COMBO = 4
@@ -21,16 +25,51 @@ class HitObject(object):
 
     def __init__(self, x, y, time, hitsound):
         self.x = x
+        """
+            The x coordinate of the hitobject.
+        """
         self.y = y
-        self.time = time
+        """
+            The y coordinate of the hitobject.
+        """
+        self.time = float(time)
+        """
+            The time, in milliseconds at which the hitobject is located.
+        """
         self.hitsound = hitsound
+        """
+            The numerical value of the hitsound this object is using.
+        """
         self.sample_set = 0
+        """
+            The numerical value of the sample set of this object.
+        """
         self.addition = 0
+        """
+            The numerical value of the additional hitsound of this object.
+        """
         self.custom_set = 0
+        """
+            The index of the sample set currently in use.
+        """
         self.volume = 0
+        """
+            The volume of this object, as osu measures it.
+        """
+
         self.custom_sample = ""
+        """
+            The sample to play when this object is hit.
+            If not empty, overrides sample_set, addition and custom_set to 0.
+        """
 
     def set_addition(self, add_dt):
+        """
+        Set the addition data from the array resulting of splitting the
+        entry describing sampleset, addition, custom set, volume and sample of this hitsound.
+        :param add_dt: The split entry.
+        :return:
+        """
         self.sample_set = add_dt[0] if len(add_dt) > 0 else 0
         self.addition = add_dt[1] if len(add_dt) > 1 else 0
         self.custom_set = add_dt[2] if len(add_dt) > 2 else 0
@@ -38,6 +77,10 @@ class HitObject(object):
         self.custom_sample = add_dt[4] if len(add_dt) > 4 else ""
 
     def get_additive_str(self):
+        """
+        Get the string for the additive hitsound data.
+        :return: A string in the x:x:x:x: format.
+        """
         if len(self.custom_sample) > 0:
             s = "0:0:0:{}:{}".format(self.volume, self.custom_sample)
         else:
@@ -48,6 +91,10 @@ class HitObject(object):
         return s
 
     def __str__(self):
+        """
+        Generate the string representation of this object.
+        :return: A x,y,time and so on representation of this hitobject.
+        """
         return "{},{},{},{},{},{}".format(self.x,
                                           self.y,
                                           self.time,
@@ -57,6 +104,11 @@ class HitObject(object):
 
     @staticmethod
     def from_string(string):
+        """
+        Create a hitobject of the correct class from a line of the [HitObjects] section of a .osu file.
+        :param string: The line of the [HitObjects] section.
+        :return: A derivative class of HitObject from this string.
+        """
         entries = string.split(",")
         try:
             val = int(entries[3])  # hitobject kind
@@ -87,7 +139,7 @@ class HitObject(object):
 def default_int(s):
     try:
         return int(s)
-    except Exception as e:
+    except:
         return s
 
 
@@ -104,11 +156,30 @@ class Slider(HitObject):
     def __init__(self, x, y, time, hitsound):
         HitObject.__init__(self, x, y, time, hitsound)
         self.repeat = 1
+        """
+            The amount of times the slider repeats itself.
+        """
         self.points = []
+        """
+            A list of dictionaries containing the keys 'x' and 'y' containing the point's coordinates.
+        """
         self.type = "P"
+        """
+            The slider type. Follows the .osu representation.
+        """
         self.pixel_length = 140
+        """
+            The playfield-relative length of this slider.
+        """
         self.edge_hitsound = 0
+        """
+            The numerical value of the hitsound to play at an edge.
+        """
         self.edge_addition = 0
+        """
+            The numerical value of the additional hitsound to play at an edge.
+        """
+
         self.type = HitObject.SLIDER
 
     def set_data(self, data):
@@ -142,6 +213,9 @@ class Spinner(HitObject):
     def __init__(self, x, y, time, hitsound):
         HitObject.__init__(self, x, y, time, hitsound)
         self.end_time = time
+        """
+            The time at which this spinner ends.
+        """
         self.type = HitObject.SPINNER
 
     def set_data(self, data):
@@ -153,6 +227,9 @@ class Hold(HitObject):
     def __init__(self, x, y, time, hitsound):
         HitObject.__init__(self, x, y, time, hitsound)
         self.end_time = time
+        """
+            The time at which this hold should be released.
+        """
         self.type = HitObject.HOLD
 
     def set_data(self, data):
@@ -165,4 +242,8 @@ class Hold(HitObject):
 
     @property
     def duration(self):
+        """
+        Get the duration of this hold.
+        :return: The duration of this hold, in milliseconds.
+        """
         return self.end_time - self.time

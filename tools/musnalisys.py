@@ -224,28 +224,31 @@ def put_fft(fft_tuples, start, end):
     prev_fft = fft_tuples
 
 
+def perform_fft_storyboard():
+    do_fft()
+    print("\nPower: \n\tMin: {} \n\tMax: {}".format(min_power, max_power))
+    print("Generating events.")
+
+    x_offset = 0
+    if widescreen:
+        x_offset = Screen.StartWidescreen
+
+    sprites = [Sprite(file=bar_fn, location=[x*size + size / 2 + x_offset, bar_loc], origin=bar_origin)
+               for x in range(objects)]
+
+    # Fade out. Recommended that you adjust the parameters instead.
+    for x in sprites:
+        x.fade(Ease.Linear, 0, fadeout_start, 1, 1)
+        x.fade(Ease.Linear, fadeout_start, fadeout_start + fade_threshold, 1, 0)
+    for x in frame_fft:
+        put_fft(x[2], x[0], x[1])
+
+    print("Exporting osb.")
+    Storyboard.export("fft.osb")
+
+    print("Processing took {:.2f} seconds.".format(time() - process_time))
+
+
 # Now, everything's pretty much ready. Do it.
-do_fft()
-print("")
-print("Power: \n\tMin: {} \n\tMax: {}".format(min_power, max_power))
-
-print("Generating events.")
-
-x_offset = 0
-if widescreen:
-    x_offset = Screen.StartWidescreen
-
-sprites = [Sprite(file=bar_fn, location=[x*size + size / 2 + x_offset, bar_loc], origin=bar_origin)
-           for x in range(objects)]
-
-# Fade out. Recommended that you adjust the parameters instead.
-for x in sprites:
-    x.fade(Ease.Linear, 0, fadeout_start, 1, 1)
-    x.fade(Ease.Linear, fadeout_start, fadeout_start + fade_threshold, 1, 0)
-for x in frame_fft:
-    put_fft(x[2], x[0], x[1])
-
-print("Exporting osb.")
-Storyboard.export("fft.osb")
-
-print("Processing took {:.2f} seconds.".format(time() - process_time))
+if __name__ == "__main__":
+    perform_fft_storyboard()

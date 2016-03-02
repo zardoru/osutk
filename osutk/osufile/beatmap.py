@@ -1,14 +1,20 @@
 __author__ = 'Agka'
 
 import re
-import osutk.objects.timing_point as timing_point
+from osutk.objects.timing_point import TimingPoint
 from osutk.objects.hitobject import HitObject
 
 class Color(object):
+    """
+    A combo color.
+    """
     def __init__(self, r=255, g=255, b=255):
         self.Red = r
+        """ The red value for this combo """
         self.Green = g
+        """ The green value for this combo """
         self.Blue = b
+        """The blue value for this combo """
 
 
 class Beatmap(object):
@@ -17,10 +23,10 @@ class Beatmap(object):
         # missing: Metadata, version, mode, etcetera
 
         self.timing_points = []
-        """ A list containing all timing points for this osu! osufile. """
+        """ A list containing all timing points for this beatmap. """
 
         self.objects = []
-        """ A list containing all objects for this osu! osufile. """
+        """ A list containing all objects for this beatmap. """
 
         self.colors = {}
         """ A dictionary containing the colors used on the beatmap.
@@ -100,27 +106,7 @@ class Beatmap(object):
 
         raise ValueError("The object's X (={}) is out of range.".format(hitobject.x))
 
-def read_timing(beatmap, line):
-    beatmap.timing_points.append(timing_point.from_string(line))
 
-def read_attributes(area, line):
-    line = line.split(":")
-    attribute = line[0].strip() if len(line) > 0 else None
-    value = line[1].strip() if len(line) > 1 else None
-
-    # turn metadata into python attributes; attribute: value
-    if attribute is not None and value is not None:
-        setattr(area, attribute, value)
-
-def read_color(colors, line):
-    match = re.match(
-        "\s*Combo(\d+)\s*:\s*(\d{0,3}),(\d{0,3}),(\d{0,3})\s*", line)
-    if match is not None:
-        colors[int(match.group(1))] = Color(r=int(match.group(2)), g=int(match.group(3)), b=int(match.group(4)))
-
-
-def read_hitobject(output_list, line):
-    output_list.append(HitObject.from_string(line))
 
 def read_from_file(filename):
     """
@@ -129,10 +115,32 @@ def read_from_file(filename):
     :return: the beatmap object
     """
     output = Beatmap()
-    with open(filename) as in_file:
+    section_dict = {}
+
+    # internal methods
+    def read_timing(beatmap, line):
+        beatmap.timing_points.append(TimingPoint.from_string(line))
+
+    def read_attributes(area, line):
+        line = line.split(":")
+        attribute = line[0].strip() if len(line) > 0 else None
+        value = line[1].strip() if len(line) > 1 else None
+
+        # turn metadata into python attributes; attribute: value
+        if attribute is not None and value is not None:
+            setattr(area, attribute, value)
+
+    def read_color(colors, line):
+        match = re.match(
+            "\s*Combo(\d+)\s*:\s*(\d{0,3}),(\d{0,3}),(\d{0,3})\s*", line)
+        if match is not None:
+            colors[int(match.group(1))] = Color(r=int(match.group(2)), g=int(match.group(3)), b=int(match.group(4)))
+
+    def read_hitobject(output_list, line):
+        output_list.append(HitObject.from_string(line))
+
+    def read_sections(in_file):
         current_section = "version"
-        section_regex = re.compile(r'^\[(.*)\]$')
-        section_dict = {}
         for line in in_file:
             line = line.rstrip()
             # Read the version.
@@ -143,7 +151,7 @@ def read_from_file(filename):
                 continue
 
             # See if we're changing the current reading section
-            section_match = section_regex.match(line)
+            section_match = re.match(r'^\[(.*)\]$', line)
             if section_match is not None:  # Yes, we are
                 current_section = section_match.group(1)
                 section_dict[current_section] = []
@@ -153,6 +161,7 @@ def read_from_file(filename):
                 if len(line) > 0:
                     section_dict[current_section].append(line)
 
+    def load_sections():
         for section in section_dict:
             for line in section_dict[section]:
                 if section == "TimingPoints":
@@ -167,4 +176,10 @@ def read_from_file(filename):
                     read_color(output.colors, line)
                 elif section == "HitObjects":
                     read_hitobject(output.objects, line)
+
+    with open(filename) as in_file:
+        # Read all sections.
+        read_sections(in_file)
+        load_sections()
+
     return output

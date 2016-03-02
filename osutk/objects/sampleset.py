@@ -1,12 +1,25 @@
 __author__ = 'Agka'
 
 class SampleSet(object):
+    """
+    The sampleset data associated to a timing point.
+    """
+
     set_kinds = ("Auto", "Normal", "Soft", "Drum")
 
     def __init__(self, kind=set_kinds[0], volume=15, custom_set=0):
         self.kind = kind
+        """
+        The kind of sampleset, as a string.
+        """
         self.volume = volume
+        """
+        The volume of this sampleset, as a raw numerical .osu value.
+        """
         self.custom_set = custom_set
+        """
+        The custom set to apply at this sampleset.
+        """
 
     @staticmethod
     def kind_from_index(index):
