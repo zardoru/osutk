@@ -1,4 +1,5 @@
 from osutk import Beatmap
+from osutk import SampleSet
 import osutk.osufile.beatmap as bm
 import unittest
 
@@ -30,6 +31,7 @@ class TestBeatmapLoading(unittest.TestCase):
         print("Testing that the first timing point has the correct value")
         self.assertEqual(beatmap.timing_points[0].value, 461.538461538462)
         self.assertEqual(beatmap.timing_points[0].time, 1708)
+        self.assertEqual(beatmap.timing_points[0].sample_set, SampleSet.AUTO)
         print("Kiai-enabled timing points: ", len(list(filter(lambda x: x.kiai != 0, beatmap.timing_points))))
 
     def test_hitobjects(self):

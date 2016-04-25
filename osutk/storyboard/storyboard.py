@@ -1,11 +1,13 @@
+from .constants import *
+
 __author__ = 'Agka'
 
-from .constants import *
 
 # This function formats decimal storyboard values up to 3 decimals, removing
 # any pointless 0s and periods.
 def _fmt(val):
     return "{:.3f}".format(float(val)).rstrip("0").rstrip(".")
+
 
 class Storyboard(object):
     """
@@ -69,86 +71,91 @@ class SpriteEvent(object):
         self.end_value = 0
         self.ease = Ease.Linear
 
+    @property
+    def _time_shorthand(self):
+        if self.start_time == self.end_time:
+            return "{:.0f},".format(self.start_time)
+        else:
+            return "{:.0f},{:.0f}".format(self.start_time, self.end_time)
+
+    @property
+    def _1v_shorthand(self):
+        if self.start_value == self.end_value:
+            return "{}".format(_fmt(self.start_value))
+        else:
+            return "{},{}".format(_fmt(self.start_value), _fmt(self.end_value))
+
+    @property
+    def _2v_shorthand(self):
+        if self.start_value == self.end_value:
+            return "{},{}".format(_fmt(self.start_value[0]), _fmt(self.start_value[1]))
+        else:
+            return "{},{},{},{}".format(_fmt(self.start_value[0]), _fmt(self.start_value[1]),
+                                        _fmt(self.end_value[0]), _fmt(self.end_value[1]))
+
+    @property
+    def _3v_shorthand(self):
+        if self.start_value == self.end_value:
+            return "{},{},{}".format(_fmt(self.start_value[0]), _fmt(self.start_value[1]), _fmt(self.start_value[2]))
+        else:
+            return "{},{},{},{},{},{}".format(_fmt(self.start_value[0]),
+                                              _fmt(self.start_value[1]),
+                                              _fmt(self.start_value[2]),
+                                              _fmt(self.end_value[0]),
+                                              _fmt(self.end_value[1]),
+                                              _fmt(self.end_value[2]))
+
+    @property
+    def _p_shorthand(self):
+        if self.command == Command.FlipHorizontally:
+            return 'H'
+        elif self.command == Command.FlipVertically:
+            return 'V'
+        elif self.command == Command.MakeAdditive:
+            return 'A'
+
     def __str__(self):
         cmd = self.command
+        dic = {
+            'ease': self.ease,
+            'tsh': self._time_shorthand  # time shorthand
+        }
+
         if cmd == Command.Fade:
-            dic = {'ease': self.ease,
-                   'start_time': self.start_time,
-                   'end_time': self.end_time,
-                   'sv': _fmt(self.start_value),
-                   'ev': _fmt(self.end_value)}
-            return "F,{ease},{start_time:.0f},{end_time:.0f},{sv},{ev}".format(**dic)
-        if cmd == Command.Move:
-            dic = {'ease': self.ease,
-                   'start_time': self.start_time,
-                   'end_time': self.end_time,
-                   'sx': _fmt(self.start_value[0]),
-                   'sy': _fmt(self.start_value[1]),
-                   'ex': _fmt(self.end_value[0]),
-                   'ey': _fmt(self.end_value[1])}
-            return "M,{ease},{start_time:.0f},{end_time:.0f},{sx},{sy},{ex},{ey}".format(**dic)
+            dic['cmd'] = 'F'
+            dic['vsh'] = self._1v_shorthand  # value shorthand
         elif cmd == Command.MoveX:
-            dic = {'ease': self.ease,
-                   'start_time': self.start_time,
-                   'end_time': self.end_time,
-                   'sx': _fmt(self.start_value),
-                   'ex': _fmt(self.end_value)}
-
-            return "MX,{ease},{start_time:.0f},{end_time:.0f},{sx},{ex}".format(**dic)
+            dic['cmd'] = 'MX'
+            dic['vsh'] = self._1v_shorthand  # value shorthand
         elif cmd == Command.MoveY:
-            dic = {'ease': self.ease,
-                   'start_time': self.start_time,
-                   'end_time': self.end_time,
-                   'sy': _fmt(self.start_value),
-                   'ey': _fmt(self.end_value)}
-
-            return "MY,{ease},{start_time:.0f},{end_time:.0f},{sy},{ey}".format(**dic)
+            dic['cmd'] = 'MY'
+            dic['vsh'] = self._1v_shorthand  # value shorthand
         elif cmd == Command.Scale:
-            dic = {'ease': self.ease,
-                   'start_time': self.start_time,
-                   'end_time': self.end_time,
-                   'sv': _fmt(self.start_value),
-                   'ev': _fmt(self.end_value)}
-            return "S,{ease},{start_time:.0f},{end_time:.0f},{sv},{ev}".format(**dic)
-        elif cmd == Command.VectorScale:
-            dic = {'ease': self.ease,
-                   'start_time': self.start_time,
-                   'end_time': self.end_time,
-                   'sx': _fmt(self.start_value[0]),
-                   'sy': _fmt(self.start_value[1]),
-                   'ex': _fmt(self.end_value[0]),
-                   'ey': _fmt(self.end_value[1])}
-            return "V,{ease},{start_time:.0f},{end_time:.0f},{sx},{sy},{ex},{ey}".format(**dic)
+            dic['cmd'] = 'S'
+            dic['vsh'] = self._1v_shorthand  # value shorthand
         elif cmd == Command.Rotate:
-            dic = {'ease': self.ease,
-                   'start_time': self.start_time,
-                   'end_time': self.end_time,
-                   'sv': _fmt(self.start_value),
-                   'ev': _fmt(self.end_value)}
-            return "R,{ease},{start_time:.0f},{end_time:.0f},{sv},{ev}".format(**dic)
+            dic['cmd'] = 'R'
+            dic['vsh'] = self._1v_shorthand
+        elif cmd == Command.VectorScale:
+            dic['cmd'] = 'V'
+            dic['vsh'] = self._2v_shorthand
+        elif cmd == Command.Move:
+            dic['cmd'] = 'M'
+            dic['vsh'] = self._2v_shorthand
         elif cmd == Command.Color:
-            dic = {'ease': self.ease,
-                   'start_time': self.start_time,
-                   'end_time': self.end_time,
-                   'sr': self.start_value[0], 'sg': self.start_value[1], 'sb': self.start_value[2],
-                   'er': self.end_value[0], 'er': self.end_value[1], 'eb': self.end_value[2]}
-            return "C,{ease},{start_time:.0f},{end_time:.0f},{sr:.0f},{sg:.0f},{sb:.0f},{er:.0f},{eg:.0f},{eb:.0f}" \
-                .format(**dic)
+            dic['cmd'] = 'C'
+            dic['vsh'] = self._3v_shorthand
         elif cmd == Command.FlipHorizontally:
-            dic = {'ease': self.ease,
-                   'start_time': self.start_time,
-                   'end_time': self.end_time}
-            return "P,{ease},{start_time:.0f},{end_time:.0f},H".format(**dic)
+            dic['cmd'] = 'P'
+            dic['vsh'] = self._p_shorthand
         elif cmd == Command.FlipVertically:
-            dic = {'ease': self.ease,
-                   'start_time': self.start_time,
-                   'end_time': self.end_time}
-            return "P,{ease},{start_time:.0f},{end_time:.0f},V".format(**dic)
+            dic['cmd'] = 'P'
+            dic['vsh'] = self._p_shorthand
         elif cmd == Command.MakeAdditive:
-            dic = {'ease': self.ease,
-                   'start_time': self.start_time,
-                   'end_time': self.end_time}
-            return "P,{ease},{start_time:.0f},{end_time:.0f},A".format(**dic)
+            dic['cmd'] = 'P'
+            dic['vsh'] = self._p_shorthand
+
+        return "{cmd},{ease},{tsh},{vsh}".format(**dic)
 
 
 def create_event(command, **args):
@@ -161,15 +168,18 @@ def create_event(command, **args):
     """
     evt = SpriteEvent(command)
     if 'start_time' in args:
-        evt.start_time = args['start_time']
+        evt.start_time = args['start_time'] or args['end_time']
     if 'end_time' in args:
-        evt.end_time = args['end_time']
+        if 'duration' in args and args['duration']:
+            evt.end_time = args['start_time'] + args['duration']
+        else:
+            evt.end_time = args['end_time'] or args['start_time']
     if 'ease' in args:
-        evt.ease = args['ease']
+        evt.ease = args['ease'] or 0
     if 'start_value' in args:
-        evt.start_value = args['start_value']
+        evt.start_value = args['start_value'] or args['end_value']
     if 'end_value' in args:
-        evt.end_value = args['end_value']
+        evt.end_value = args['end_value'] or args['start_value']
     return evt
 
 
@@ -185,7 +195,11 @@ class CommandList(object):
         """
         self._events.append(event)
 
-    def move(self, _ease, _st, _et, _sx, _sy, _ex, _ey):
+    def move(self, _ease=0,
+             _st=0, _et=None,
+             _sx=0, _sy=0,
+             _ex=None, _ey=None,
+             _dur=None):
         """
         Move from point A to point B.
          :param _ease: Easing.
@@ -195,6 +209,7 @@ class CommandList(object):
          :param _sy: Start Y.
          :param _ex: End X.
          :param _ey: End Y.
+         :param _dur: If _et is not set but _dur is, _et is _st + dur. Else, it's _st.
          :return:
         """
         self.add_event(create_event(Command.Move,
@@ -202,10 +217,11 @@ class CommandList(object):
                                     start_time=_st,
                                     end_time=_et,
                                     start_value=[_sx, _sy],
-                                    end_value=[_ex, _ey]))
+                                    end_value=[_ex, _ey],
+                                    duration=_dur))
         return self
 
-    def move_x(self, _ease, _st, _et, _sx, _ex):
+    def move_x(self, _ease=0, _st=None, _et=None, _sx=None, _ex=None, _dur=None):
         """
         Move across the X axis.
          :param _ease: Easing.
@@ -213,6 +229,7 @@ class CommandList(object):
          :param _et: End time.
          :param _sx: Start X value.
          :param _ex: End X value.
+         :param _dur: If _et is not set but _dur is, _et is _st + dur. Else, it's _st.
          :return:
         """
         self.add_event(create_event(Command.MoveX,
@@ -220,10 +237,11 @@ class CommandList(object):
                                     start_time=_st,
                                     end_time=_et,
                                     start_value=_sx,
-                                    end_value=_ex))
+                                    end_value=_ex,
+                                    duration=_dur))
         return self
 
-    def move_y(self, _ease, _st, _et, _sy, _ey):
+    def move_y(self, _ease=0, _st=0, _et=None, _sy=0, _ey=None, _dur=None):
         """
         Move across the Y axis.
          :param _ease: Easing.
@@ -231,6 +249,7 @@ class CommandList(object):
          :param _et: End Time.
          :param _sy: Start Y value.
          :param _ey: End Y value.
+         :param _dur: If _et is not set but _dur is, _et is _st + dur. Else, it's _st.
          :return: self
         """
         self.add_event(create_event(Command.MoveY,
@@ -238,10 +257,11 @@ class CommandList(object):
                                     start_time=_st,
                                     end_time=_et,
                                     start_value=_sy,
-                                    end_value=_ey))
+                                    end_value=_ey,
+                                    duration=_dur))
         return self
 
-    def scale(self, _ease, _st, _et, _ss, _es):
+    def scale(self, _ease=0, _st=0, _et=None, _ss=1, _es=1, _dur=None):
         """
         Simultaneous axis scaling. Grow X and Y by a factor.
          :param _ease: Easing.
@@ -249,6 +269,7 @@ class CommandList(object):
          :param _et: End time.
          :param _ss: Start scale.
          :param _es: End scale.
+         :param _dur: If _et is not set but _dur is, _et is _st + dur. Else, it's _st.
          :return: self
         """
         self.add_event(create_event(Command.Scale,
@@ -256,10 +277,15 @@ class CommandList(object):
                                     start_time=_st,
                                     end_time=_et,
                                     start_value=_ss,
-                                    end_value=_es))
+                                    end_value=_es,
+                                    duration=_dur))
         return self
 
-    def vector_scale(self, _ease, _st, _et, _sx, _sy, _ex, _ey):
+    def vector_scale(self, _ease=0,
+                     _st=0, _et=None,
+                     _sx=1, _sy=1,
+                     _ex=None, _ey=None,
+                     _dur=None):
         """
         Vector scaling. Independently grow X and Y axis by a factor of the original size.
          :param _ease: Easing.
@@ -269,6 +295,7 @@ class CommandList(object):
          :param _sy: Start Y value.
          :param _ex: End X value.
          :param _ey: End Y value.
+         :param _dur: If _et is not set but _dur is, _et is _st + dur. Else, it's _st.
         :return: self
         """
         self.add_event(create_event(Command.VectorScale,
@@ -276,10 +303,11 @@ class CommandList(object):
                                     start_time=_st,
                                     end_time=_et,
                                     start_value=[_sx, _sy],
-                                    end_value=[_ex, _ey]))
+                                    end_value=[_ex, _ey],
+                                    duration=_dur))
         return self
 
-    def fade(self, _ease, _st, _et, _sv, _ev):
+    def fade(self, _ease=0, _st=0, _et=None, _sv=1, _ev=None, _dur=None):
         """
         Fade from a value to another value (0 being fully transparent, 1 fully opaque)
          :param _ease: Easing.
@@ -287,6 +315,7 @@ class CommandList(object):
          :param _et: End time.
          :param _sv: Start fade value.
          :param _ev: End fade value.
+         :param _dur: If _et is not set but _dur is, _et is _st + dur. Else, it's _st.
          :return: self
         """
         self.add_event(create_event(Command.Fade,
@@ -294,17 +323,19 @@ class CommandList(object):
                                     start_time=_st,
                                     end_time=_et,
                                     start_value=_sv,
-                                    end_value=_ev))
+                                    end_value=_ev,
+                                    duration=_dur))
         return self
 
-    def rotate(self, _ease, _st, _et, _sr, _er):
+    def rotate(self, _ease=0, _st=None, _et=None, _sr=None, _er=None, _dur=None):
         """
         Rotate from a value to another value in radians.
          :param _ease: Easing.
          :param _st: Start time.
          :param _et: End time.
-         param _sr: Start rotation value.
+         :param _sr: Start rotation value.
          :param _er: End rotation value.
+         :param _dur: If _et is not set but _dur is, _et is _st + dur. Else, it's _st.
          :return:
         """
 
@@ -313,10 +344,15 @@ class CommandList(object):
                                     start_time=_st,
                                     end_time=_et,
                                     start_value=_sr,
-                                    end_value=_er))
+                                    end_value=_er,
+                                    duration=_dur))
         return self
 
-    def colour(self, _ease, _st, _et, _sr, _sg, _sb, _er, _eg, _eb):
+    def colour(self, _ease=0,
+               _st=None, _et=None,
+               _sr=None, _sg=None, _sb=None,
+               _er=None, _eg=None, _eb=None,
+               _dur=None):
         """
         Same as color().
         """
@@ -325,10 +361,15 @@ class CommandList(object):
                                     start_time=_st,
                                     end_time=_et,
                                     start_value=[_sr, _sg, _sb],
-                                    end_value=[_er, _eg, _eb]))
+                                    end_value=[_er, _eg, _eb],
+                                    duration=_dur))
         return self
 
-    def color(self, _ease, _st, _et, _sr, _sg, _sb, _er, _eg, _eb):
+    def color(self, _ease=0,
+              _st=None, _et=None,
+              _sr=None, _sg=None, _sb=None,
+              _er=None, _eg=None, _eb=None,
+              _dur=None):
         """
         Colorize from one RGB to a second RGB
          :param _ease: Easing.
@@ -340,12 +381,13 @@ class CommandList(object):
          :param _er: End red value.
          :param _eg: End green value.
          :param _eb: End blue value.
+         :param _dur: If _et is not set but _dur is, _et is _st + dur. Else, it's _st.
          :return: self
         """
-        self.colour(_ease, _st, _et, _sr, _sg, _sb, _er, _eg, _eb)
+        self.colour(_ease, _st, _et, _sr, _sg, _sb, _er, _eg, _eb, _dur)
         return self
 
-    def flip_horizontally(self, _st, _et):
+    def flip_horizontally(self, _st=None, _et=None):
         """
         Flip sprite horizontally for a specific duration.
          :param _st: Start time.
@@ -356,24 +398,30 @@ class CommandList(object):
         self.add_event(create_event(Command.FlipHorizontally, start_time=_st, end_time=_et))
         return self
 
-    def flip_vertically(self, _st, _et):
+    def flip_vertically(self, _st=None, _et=None, _dur=None):
         """
         Flip sprite vertically for a specific duration.
          :param _st: Start time.
          :param _et: End time.
+         :param _dur: If _et is not set but _dur is, _et is _st + dur. Else, it's _st.
          :return: self
         """
-        self.add_event(create_event(Command.FlipVertically, start_time=_st, end_time=_et))
+        self.add_event(create_event(Command.FlipVertically,
+                                    start_time=_st, end_time=_et,
+                                    duration=_dur))
         return self
 
-    def additive(self, _st, _et):
+    def additive(self, _st=None, _et=None, _dur=None):
         """
         Set additive mode for a specific duration.
          :param _st: Start time.
          :param _et: End time.
+         :param _dur: If _et is not set but _dur is, _et is _st + dur. Else, it's _st.
          :return: self
         """
-        self.add_event(create_event(Command.MakeAdditive, start_time=_st, end_time=_et))
+        self.add_event(create_event(Command.MakeAdditive,
+                                    start_time=_st, end_time=_et,
+                                    duration=_dur))
         return self
 
     def loop(self, _st, _lc):
@@ -390,11 +438,13 @@ class CommandList(object):
     def join_sub_events(self):
         return "\n".join(["\n".join(map(lambda x: "_" + x, str(x).split("\n"))) for x in self._events])
 
+
 class SpriteEventLoop(CommandList):
     """
     Loop events. Transforms parent sprite a number of times from a time.
     Every loop's duration is the furthest end point of the events it contains.
     """
+
     def __init__(self, start_time=0, loops=1):
         CommandList.__init__(self)
         self.start_time = start_time
@@ -410,6 +460,7 @@ class SpriteEventLoop(CommandList):
 
     def __exit__(self, t, v, tb):
         pass
+
 
 class Sprite(CommandList):
     def __init__(self, layer=Layer.Background, origin=Origin.TopLeft, file="", location=(0, 0)):
@@ -441,6 +492,7 @@ A sprite with only the raw osu! commands.
         events = self.join_sub_events()
         return 'Sprite,{layer},{origin},"{file}",{sx:.0f},{sy:.0f}\n'.format(**dic) + events
 
+
 class ExtSprite(Sprite):
     def __init__(self, layer=Layer.Background, origin=Origin.TopLeft, file="", location=(0, 0)):
         """
@@ -456,6 +508,7 @@ A Sprite with more built-ins to play with than the standard commands.
 
     def display(self, start_time, end_time):
         self.fade(Ease.Linear, start_time, end_time, 1, 1)
+
 
 class Sample(object):
     def __init__(self, time, layer, file, volume):

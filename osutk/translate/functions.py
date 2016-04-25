@@ -1,5 +1,6 @@
 __author__ = 'Agka'
 
+
 def bpm_to_beatspace(bpm):
     """
     Convert a BPM to a beatspace
@@ -7,6 +8,7 @@ def bpm_to_beatspace(bpm):
     :return: BPM converted to Beats per Millisecond
     """
     return 60000.0 / bpm
+
 
 def bpm_from_beatspace(btsp):
     """
@@ -30,9 +32,10 @@ def to_osu_time_notation(time):
         raise ValueError("Invalid parameter. Expected convertible to int.")
 
     minutes = int(time/60000)
-    millisecs = int(time % 1000)
-    seconds = int((time - minutes * 60000 - millisecs) / 1000)
-    return "{:02d}:{:02d}:{:03d}".format(minutes, seconds, millisecs)
+    milliseconds = int(time % 1000)
+    seconds = int((time - minutes * 60000 - milliseconds) / 1000)
+    return "{:02d}:{:02d}:{:03d}".format(minutes, seconds, milliseconds)
+
 
 def from_osu_time_notation(time_string):
     """

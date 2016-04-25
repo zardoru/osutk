@@ -1,6 +1,6 @@
-__author__ = 'Agka'
+from . import osufile
+from . import objects
+from . import svtools
+from . import translate
 
-from .osufile import *
-from .objects import *
-from .svtools import *
-from .translate import *
+__author__ = 'Agka'

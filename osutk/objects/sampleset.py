@@ -1,11 +1,16 @@
 __author__ = 'Agka'
 
+
 class SampleSet(object):
     """
     The sampleset data associated to a timing point.
     """
 
     set_kinds = ("Auto", "Normal", "Soft", "Drum")
+    AUTO = 0
+    NORMAL = 1
+    SOFT = 2
+    DRUM = 3
 
     def __init__(self, kind=set_kinds[0], volume=15, custom_set=0):
         self.kind = kind

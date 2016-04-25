@@ -2,6 +2,7 @@ from .sampleset import SampleSet
 
 __author__ = 'Agka'
 
+
 class TimingPoint(object):
     """ Timing point class that contains the relevant osu! information such as
         time, value, inherited, etc... """
@@ -12,8 +13,8 @@ class TimingPoint(object):
         :param time: Time in milliseconds of the current timing point.
         :param value: Value of this timing point. No validation is done.
         :param beats_per_measure: How many beats per measure are defined on this TP. Not usable for inherited TPs.
-        :param inherited: Whether this is an inherited TP or not.
-        :param sample_set: Sample set data (see sampleset class)
+        :param uninherited: Whether this is an inherited TP or not.
+        :param sample_set: Sample set data (see sampleset enum class)
         :return: Nothing.
         """
         self.time = time
@@ -22,7 +23,7 @@ class TimingPoint(object):
         self.uninherited = uninherited
         """ Whether the timing point is uninherited """
 
-        self.sample_set = sample_set or SampleSet()
+        self.sample_set = sample_set or SampleSet.AUTO
         """ Refer to SampleSet. """
 
         self.value = value

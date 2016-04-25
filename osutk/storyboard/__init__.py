@@ -1,4 +1,4 @@
-__author__ = 'Agka'
-
 from .storyboard import Sprite, Storyboard
-from .constants import *
+from .constants import Command, Ease, Layer, Screen, Origin
+
+__author__ = 'Agka'
