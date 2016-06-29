@@ -80,6 +80,9 @@ class Origin(object):
     Center = 'Centre'
     Centre = 'Centre'
     CC = Center
+    CentreRight = "CentreRight"
+    CenterRight = "CentreRight"
+    CR = "CentreRight"
     BottomLeft = 'BottomLeft'
     BL = BottomLeft
     BottomCentre = 'BottomCentre'

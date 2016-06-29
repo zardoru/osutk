@@ -87,6 +87,13 @@ class SpriteEvent(object):
 
     @property
     def _2v_shorthand(self):
+        for i, x in enumerate(self.start_value):
+            if x is None:
+                self.start_value[i] = self.end_value[i]
+            if self.end_value[i] is None:
+                self.end_value[i] = self.start_value[i]
+
+
         if self.start_value == self.end_value:
             return "{},{}".format(_fmt(self.start_value[0]), _fmt(self.start_value[1]))
         else:
@@ -166,20 +173,33 @@ def create_event(command, **args):
     :param args: Keywords.
     :return:
     """
+    
     evt = SpriteEvent(command)
     if 'start_time' in args:
-        evt.start_time = args['start_time'] or args['end_time']
+        if args['start_time'] is not None:
+            evt.start_time = args['start_time']
+        else:
+            evt.start_time = args['end_time']
     if 'end_time' in args:
         if 'duration' in args and args['duration']:
             evt.end_time = args['start_time'] + args['duration']
         else:
-            evt.end_time = args['end_time'] or args['start_time']
+            if args['end_time'] is not None:
+                evt.end_time = args['end_time']
+            else:
+                evt.end_time = args['start_time'] 
     if 'ease' in args:
         evt.ease = args['ease'] or 0
     if 'start_value' in args:
-        evt.start_value = args['start_value'] or args['end_value']
+        if args['start_value'] is not None:
+            evt.start_value = args['start_value'] 
+        else:
+            evt.start_value = args['end_value']
     if 'end_value' in args:
-        evt.end_value = args['end_value'] or args['start_value']
+        if args['end_value'] is not None:
+            evt.end_value = args['end_value']
+        else:
+            evt.end_value = args['start_value']
     return evt
 
 
@@ -356,6 +376,13 @@ class CommandList(object):
         """
         Same as color().
         """
+        if _er is None:
+            _er = _sr
+        if _eg is None:
+            _eg = _sg
+        if _eb is None:
+            _eb = _sb
+
         self.add_event(create_event(Command.Color,
                                     ease=_ease,
                                     start_time=_st,
