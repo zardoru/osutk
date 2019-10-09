@@ -1,3 +1,4 @@
+from osutk.translate import mult_to_sv, bpm_to_beatspace
 from .sampleset import SampleSet
 
 __author__ = 'Agka'
@@ -23,7 +24,7 @@ class TimingPoint(object):
         self.uninherited = uninherited
         """ Whether the timing point is uninherited """
 
-        self.sample_set = sample_set or SampleSet.AUTO
+        self.sample_set = sample_set or SampleSet()
         """ Refer to SampleSet. """
 
         self.value = value
@@ -78,3 +79,13 @@ class TimingPoint(object):
             elif x == 7:
                 output.kiai = 1 if tp[x] != 0 else 0
         return output
+
+    def set_time_and_bpm(self, time, bpm):
+        self.time = time
+        self.value = bpm_to_beatspace(bpm)
+        self.uninherited = 1
+
+    def set_time_and_mult(self, time, mult):
+        self.time = time
+        self.value = mult_to_sv(mult)
+        self.uninherited = 0

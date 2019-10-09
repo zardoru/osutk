@@ -105,6 +105,9 @@ class Beatmap(object):
         else:
             return int(hitobject.x / lane_width)
 
+    def get_uninherited_points(self):
+        return [x for x in self.timing_points if x.uninherited == 1]
+
 
 def read_from_file(filename):
     """
@@ -181,3 +184,17 @@ def read_from_file(filename):
         load_sections()
 
     return output
+
+
+def replace_timing_section(in_filename, out_filename, tp):
+    timing = read_from_file(in_filename).get_uninherited_points() + tp
+    timing_str = "\n".join(str(x) for x in sorted(timing, key=lambda x: x.time))
+
+    with open(in_filename) as in_file:
+        text = in_file.read()
+        s = "[TimingPoints]\n{}\n[".format(timing_str)
+        out_text = re.sub(r"\[timingpoints\](.+?)\[", s, text, flags=re.I)
+        # print(text, out_text)
+
+    with open(out_filename, "w") as out_file:
+        out_file.write(out_text)

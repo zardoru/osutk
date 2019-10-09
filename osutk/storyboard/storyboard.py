@@ -463,6 +463,7 @@ class CommandList(object):
         return return_loop
 
     def join_sub_events(self):
+        # events_joined = join_shorthand(self._events)
         return "\n".join(["\n".join(map(lambda x: "_" + x, str(x).split("\n"))) for x in self._events])
 
 

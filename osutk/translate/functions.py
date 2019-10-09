@@ -37,6 +37,19 @@ def to_osu_time_notation(time):
     return "{:02d}:{:02d}:{:03d}".format(minutes, seconds, milliseconds)
 
 
+def beats_to_time(bpm, beats):
+    return bpm_to_beatspace(bpm) * beats
+
+
+def from_editor(str):
+    return []
+
+
+def editor_note_gap(str):
+    notes = from_editor(str)
+    return notes[1].time - notes[0].time
+
+
 def from_osu_time_notation(time_string):
     """
     Transform from the osu! time notation to a time in milliseconds
@@ -58,8 +71,10 @@ def from_osu_time_notation(time_string):
     else:
         raise ValueError("Not a valid osu! time notation string!")
 
+
 def mult_to_sv(mult):
     return -100 / mult
+
 
 def sv_to_mult(sv):
     return -100 / sv
