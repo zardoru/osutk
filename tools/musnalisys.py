@@ -1,5 +1,8 @@
 __author__ = 'Agka'
 
+import sys
+sys.path.append("..")
+
 # osu!tk + numpy based spectrum analyzer
 # generates osb with spectrum based off wav files
 
@@ -11,29 +14,26 @@ input_file = "input.wav"
 # File to output the OSB to.
 output_file = "fft.osb"
 
-# Whether to make the storyboard widescreen.
-widescreen = 1
-
 # How many frames per second to render the FFT.
-framerate = 30
+framerate = 20
 
 # Audio sampling rate. Adjust properly.
 sample_rate = 44100.0
 
 # How large can the objects grow
-max_scale = 0.8
+max_scale = 1
 
 # How small the objects should be at least
 min_scale = 0.1
 
 # Horizontal scale
-h_scale = 0.708333333333333333
+h_scale = 1 # 0.708333333333333333
 
 # Origin of the bars
-bar_origin = Origin.BC
+bar_origin = Origin.CC
 
 # Location of the bars (y axis
-bar_loc = Screen.Height
+bar_loc = 247
 
 # For how long to fade out
 fade_threshold = 500  # 0.5 sec
@@ -55,6 +55,12 @@ symmetrical = 0
 # use center as low frequencies and edges as high if symmetrical
 sym_reverse = 0
 
+# total width (solely for position)
+width = 450
+
+# start position
+x_start = -70
+
 # INTERNALS
 ##############################################################################################
 from time import time
@@ -67,9 +73,34 @@ from struct import unpack
 process_time = time()
 
 # Pick the octave thirds centers to draw. One object per requency. Adjust accordingly with framerate.
-octave_third_centers = [50, 80, 100, 125,
-                 160, 200, 315, 400, 500, 630, 800, 1000, 1250,
-                 1600, 2000, 2500, 3150, 4000, 5000, 6300, 8000, 10000, 12500, 16000]
+centers_30fps = [
+    50, 80, # doesn't work at 40 fps
+    100, 125, 160, # doesn't work at 60fps
+    200, 315, 400, 500, 
+    630, 800, 1000, 1250,
+    1600, 2000, 2500, 3150, 
+    4000, 5000, 6300, 8000, 
+    10000, 12500, 16000
+]
+
+centers_20fps = [
+    50, 
+    100, 125, 160, 180,
+    200, 315, 400, 500, 
+    630, 800, 1000, 1250,
+    1600, 2000, 2500, 3150, 
+    4000, 5000, 6300, 8000, 
+    10000, 12500, 16000
+]
+
+"""centers_40fps = [
+    200, 315, 400, 500, 
+    630, 800, 1000, 1250, 1600, 
+    2000, 3150, 4000, 5000, 6300, 8000,
+    10000, 12500, 16000
+]"""   
+
+octave_third_centers = centers_20fps
 
 if symmetrical:
     if sym_reverse:
@@ -83,10 +114,7 @@ objects = len(octave_third_centers)
 min_power = [0] * objects
 max_power = [-10000000] * objects
 
-if not widescreen:
-    size = Screen.Width / objects
-else:
-    size = Screen.WidthWidescreen / objects
+size = width / objects
 
 # audio frames per video frame
 samples_per_frame = int(sample_rate / framerate)
@@ -102,13 +130,13 @@ difference = fft_frequencies[1] - fft_frequencies[0]
 upper_octaves = [base_round(x * (2.0 ** (1.0 / (2 * 3))), difference) for x in octave_third_centers]
 lower_octaves = [base_round(x / (2.0 ** (1.0 / (2 * 3))), difference) for x in octave_third_centers]
 
-print("Octave bounds: \n\tLow: {} \n\tHigh: {}".format(lower_octaves, upper_octaves))
+print("Octave bounds: \n{}".format(list(zip(lower_octaves, upper_octaves))))
 
 # Now we'll have the FFT frequencies for what we're getting from the audio.
 upper_index = [fft_frequencies.index(x) if x in fft_frequencies else len(fft_frequencies)-1 for x in upper_octaves]
 lower_index = [fft_frequencies.index(x) if x in fft_frequencies else len(fft_frequencies)-1 for x in lower_octaves]
 
-print("Octave indices: \n\tLow: {} \n\tHigh: {}".format(lower_index, upper_index))
+print("Octave indices: \n{}".format(list(zip(lower_index, upper_index))))
 
 # FFT and Audio Processing
 ###############################################################################
@@ -158,8 +186,9 @@ def do_fft():
             fft_values = fft(frames)
             fft_values = numpy.abs(fft_values)
 
-            unique_pts = len(fft_values) / 2
+            unique_pts = int(len(fft_values) / 2)
             # l, r = fft_values[:unique_pts], fft_values[unique_pts:]
+            # print(fft_values, unique_pts)
             l = fft_values[:unique_pts]
             if not symmetrical:  # repeat FFT twice or not?
                 fft_values = l
@@ -175,8 +204,14 @@ def do_fft():
                 range_len = upper_index[fft_bin] - lower_index[fft_bin]
                 if range_len != 0:
                     for frequency_value in range(lower_index[fft_bin], upper_index[fft_bin]):
+
                         if frequency_value < len(fft_values):
-                            bin_max = max(10 * math.log10(fft_values[frequency_value] ** 2), bin_max)
+                            volt = fft_values[frequency_value] ** 2
+
+                            if volt != 0:
+                                powval = 10 * math.log10(volt)
+                                # print (powval)
+                                bin_max = max(powval, bin_max)
                     # There's several ways of doing this; raw amplitude, power, decibel scale
                     # you could take the average or the maximum, I settle for the max.
 
@@ -186,8 +221,13 @@ def do_fft():
                     # add to set of bins this audio frame
                     bins_this_frame.append(bin_max)
                 else:
-                    raise ValueError("The framerate is too high for the frequency {} to be properly represented"\
-                                     .format(octave_third_centers[fft_bin]))
+                    msg = ("The framerate is too high for the frequency {} to be properly represented" + 
+                           "given indices {} to {}") \
+                        .format(
+                            octave_third_centers[fft_bin], 
+                            lower_index[fft_bin], 
+                            upper_index[fft_bin])
+                    raise ValueError(msg)
 
             # add bins to fft analysis data
             frame_fft.append(((current_frame - samples_per_frame) * 1000 / wav.getframerate(),
@@ -204,6 +244,7 @@ prev_fft = [0 for x in range(objects)]
 def put_fft(fft_tuples, start, end):
     global prev_fft
 
+    v_range = max_scale - min_scale
     normal_amt = abs(max(max_power))
     for n in range(len(fft_tuples)):
         if fft_tuples[n] == prev_fft[n]:
@@ -217,9 +258,12 @@ def put_fft(fft_tuples, start, end):
         lerp_next = max((fft_tuples[n]) / normal_amt, 0)
 
         # Do the vector scaling for the sprites.
-        sprites[n].vector_scale(Ease.Linear, int(start + offset), int(end + offset),
-                                h_scale, lerp_prev * (max_scale - min_scale) + min_scale,
-                                h_scale, lerp_next * (max_scale - min_scale) + min_scale)
+        sprites[n].vector_scale(Ease.SineIn, 
+                                int(start + offset), int(end + offset),
+                                _sx = h_scale,
+                                _ex = h_scale,
+                                _sy = lerp_prev * v_range + min_scale,
+                                _ey = lerp_next * v_range + min_scale)
 
     prev_fft = fft_tuples
 
@@ -229,10 +273,9 @@ def perform_fft_storyboard():
     print("\nPower: \n\tMin: {} \n\tMax: {}".format(min_power, max_power))
     print("Generating events.")
 
-    x_offset = 0
-    if widescreen:
-        x_offset = Screen.StartWidescreen
+    x_offset = x_start
 
+    global sprites
     sprites = [Sprite(file=bar_fn, location=[x*size + size / 2 + x_offset, bar_loc], origin=bar_origin)
                for x in range(objects)]
 

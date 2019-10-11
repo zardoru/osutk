@@ -62,6 +62,38 @@ class Command(object):
     FlipVertically = 10
     MakeAdditive = 11
 
+    CommandTypes = {
+        Fade,
+        Move,
+        MoveX,
+        MoveY,
+        Scale,
+        VectorScale,
+        Rotate,
+        Color,
+        FlipHorizontally,
+        FlipVertically,
+        MakeAdditive
+    }
+
+    Shorthand = {
+        Fade: 'F',
+        MoveX: 'MX',
+        MoveY: 'MY',
+        Scale:  'S',
+        Rotate: 'R',
+        VectorScale: 'V',
+        Move: 'M',
+        Color: 'C',
+        FlipHorizontally: 'P',
+        FlipVertically: 'P',
+        MakeAdditive: 'P'
+    }
+
+    @staticmethod
+    def is_reducible(evt_type):
+        return evt_type < Command.FlipHorizontally
+
 
 class Origin(object):
     """

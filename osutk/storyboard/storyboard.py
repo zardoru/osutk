@@ -72,6 +72,10 @@ class SpriteEvent(object):
         self.ease = Ease.Linear
 
     @property
+    def duration(self):
+        return self.end_time - self.start_time
+
+    @property
     def _time_shorthand(self):
         if self.start_time == self.end_time:
             return "{:.0f},".format(self.start_time)
@@ -121,48 +125,67 @@ class SpriteEvent(object):
         elif self.command == Command.MakeAdditive:
             return 'A'
 
-    def __str__(self):
+
+    def _get_as_dictionary(self):
         cmd = self.command
         dic = {
+            'cmd': Command.Shorthand[cmd],
             'ease': self.ease,
             'tsh': self._time_shorthand  # time shorthand
         }
 
         if cmd == Command.Fade:
-            dic['cmd'] = 'F'
             dic['vsh'] = self._1v_shorthand  # value shorthand
         elif cmd == Command.MoveX:
-            dic['cmd'] = 'MX'
             dic['vsh'] = self._1v_shorthand  # value shorthand
         elif cmd == Command.MoveY:
-            dic['cmd'] = 'MY'
             dic['vsh'] = self._1v_shorthand  # value shorthand
         elif cmd == Command.Scale:
-            dic['cmd'] = 'S'
             dic['vsh'] = self._1v_shorthand  # value shorthand
         elif cmd == Command.Rotate:
-            dic['cmd'] = 'R'
             dic['vsh'] = self._1v_shorthand
         elif cmd == Command.VectorScale:
-            dic['cmd'] = 'V'
             dic['vsh'] = self._2v_shorthand
         elif cmd == Command.Move:
-            dic['cmd'] = 'M'
             dic['vsh'] = self._2v_shorthand
         elif cmd == Command.Color:
-            dic['cmd'] = 'C'
             dic['vsh'] = self._3v_shorthand
         elif cmd == Command.FlipHorizontally:
-            dic['cmd'] = 'P'
             dic['vsh'] = self._p_shorthand
         elif cmd == Command.FlipVertically:
-            dic['cmd'] = 'P'
             dic['vsh'] = self._p_shorthand
         elif cmd == Command.MakeAdditive:
-            dic['cmd'] = 'P'
             dic['vsh'] = self._p_shorthand
 
+        return dic
+
+    def __str__(self):
+        dic = self._get_as_dictionary()
+
         return "{cmd},{ease},{tsh},{vsh}".format(**dic)
+
+class SpriteMultievent(object):
+    def __init__(self, st, dur, ease, evtype):
+        self.start_time = st
+        self.duration = dur
+        self.event_type = evtype 
+        self.values = []
+        self.ease = ease
+
+    def add_event(self, evt):
+        if isinstance(evt.start_value, list):
+            self.values += [x for x in evt.start_value] + [x for x in evt.end_value]
+        else:
+            self.values += [evt.start_value, evt.end_value]
+
+    def __str__(self):
+        return "{},{},{},{},{}".format(
+            self.event_type,
+            self.ease,
+            self.start_time,
+            self.start_time + self.duration,
+            ",".join(str(round(x, 6)) for x in self.values)
+        )
 
 
 def create_event(command, **args):
@@ -201,6 +224,69 @@ def create_event(command, **args):
         else:
             evt.end_value = args['start_value']
     return evt
+
+
+# This function takes a list of events and joins them by duration.
+def join_events(events):
+    events_by_command = {
+        cmd_type: [x for x in events if x.command == cmd_type] 
+        for cmd_type in Command.CommandTypes
+    }
+
+    return_events = []
+
+    for cmd_type, command_events in events_by_command.items():
+        if not Command.is_reducible(cmd_type):
+            return_events += command_events
+            continue
+
+        # group events by duration
+        durations = {evt.duration for evt in command_events}
+        events_by_duration = {dur: [x for x in command_events if x.duration == dur] for dur in durations}
+
+        # group together those with chained end/start times
+        for dur, evts in events_by_duration.items():
+            sorted_events = sorted(evts, key=lambda x: x.start_time)
+
+            while len(sorted_events) > 0:
+                current_event = sorted_events[0]
+
+                # put in this shorthand object
+                current_event_group = SpriteMultievent(
+                    current_event.start_time,
+                    dur,
+                    current_event.ease,
+                    Command.Shorthand[current_event.command]
+                )
+
+                # find all events that can be grouped with this one
+                similar_events = [current_event]
+                for evt in sorted_events[1:]:
+
+                    # Does the current event smoothly transition from the last one?
+                    if evt.start_time - current_event.end_time < 1 and \
+                       evt.ease == current_event.ease and \
+                       evt.start_value == current_event.end_value:
+                       similar_events.append(evt)
+
+                       current_event = evt
+                       continue
+
+                    # no more events can be chained to this one (performance condition)
+                    if int(evt.start_time) > int(current_event.end_time):
+                        break 
+
+
+                # remove the grouped events. we are lucky that order is preserved!
+                sorted_events = [x for x in sorted_events if x not in similar_events]
+
+                for evt in similar_events:
+                    current_event_group.add_event(evt)
+
+                return_events.append(current_event_group)
+    
+    return return_events
+    
 
 
 class CommandList(object):
@@ -463,7 +549,8 @@ class CommandList(object):
         return return_loop
 
     def join_sub_events(self):
-        # events_joined = join_shorthand(self._events)
+        # events_joined = join_events(self._events)
+        # return "\n".join(["\n".join(map(lambda x: "_" + x, str(x).split("\n"))) for x in events_joined])
         return "\n".join(["\n".join(map(lambda x: "_" + x, str(x).split("\n"))) for x in self._events])
 
 
