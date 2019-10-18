@@ -165,18 +165,26 @@ class SpriteEvent(object):
         return "{cmd},{ease},{tsh},{vsh}".format(**dic)
 
 class SpriteMultievent(object):
-    def __init__(self, st, dur, ease, evtype):
-        self.start_time = st
-        self.duration = dur
-        self.event_type = evtype 
+    def __init__(self, evt):
+        self.start_time = evt.start_time
+        self.duration = evt.end_time - evt.start_time
+        self.event_type = Command.Shorthand[evt.command]
         self.values = []
-        self.ease = ease
+        self.ease = evt.ease
 
-    def add_event(self, evt):
+        self.add_event(evt, True)
+
+    def add_event(self, evt, include_start=False):
         if isinstance(evt.start_value, list):
-            self.values += [x for x in evt.start_value] + [x for x in evt.end_value]
+            if include_start:
+                self.values += [x for x in evt.start_value]
+
+            self.values += [x for x in evt.end_value]
         else:
-            self.values += [evt.start_value, evt.end_value]
+            if include_start:
+                self.values.append(evt.start_value)
+
+            self.values.append(evt.end_value)
 
     def __str__(self):
         return "{},{},{},{},{}".format(
@@ -253,10 +261,7 @@ def join_events(events):
 
                 # put in this shorthand object
                 current_event_group = SpriteMultievent(
-                    current_event.start_time,
-                    dur,
-                    current_event.ease,
-                    Command.Shorthand[current_event.command]
+                    current_event
                 )
 
                 # find all events that can be grouped with this one
@@ -549,9 +554,9 @@ class CommandList(object):
         return return_loop
 
     def join_sub_events(self):
-        # events_joined = join_events(self._events)
-        # return "\n".join(["\n".join(map(lambda x: "_" + x, str(x).split("\n"))) for x in events_joined])
-        return "\n".join(["\n".join(map(lambda x: "_" + x, str(x).split("\n"))) for x in self._events])
+        events_joined = join_events(self._events)
+        return "\n".join(["\n".join(map(lambda x: "_" + x, str(x).split("\n"))) for x in events_joined])
+        # return "\n".join(["\n".join(map(lambda x: "_" + x, str(x).split("\n"))) for x in self._events])
 
 
 class SpriteEventLoop(CommandList):
