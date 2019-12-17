@@ -185,6 +185,9 @@ class SpriteMultievent(object):
                 self.values.append(evt.start_value)
 
             self.values.append(evt.end_value)
+        
+        if any(x is None for x in self.values):
+            print("event {}/{} of type {} has None values".format(evt.start_value, evt.end_value, evt.command))
 
     def __str__(self):
         return "{},{},{},{},{}".format(
@@ -204,7 +207,7 @@ def create_event(command, **args):
     :param args: Keywords.
     :return:
     """
-    
+    # print(args)
     evt = SpriteEvent(command)
     if 'start_time' in args:
         if args['start_time'] is not None:
@@ -219,6 +222,8 @@ def create_event(command, **args):
                 evt.end_time = args['end_time']
             else:
                 evt.end_time = args['start_time'] 
+    else:
+        evt.end_time = args['start_time']
     if 'ease' in args:
         evt.ease = args['ease'] or 0
     if 'start_value' in args:
@@ -226,11 +231,30 @@ def create_event(command, **args):
             evt.start_value = args['start_value'] 
         else:
             evt.start_value = args['end_value']
+
     if 'end_value' in args:
         if args['end_value'] is not None:
-            evt.end_value = args['end_value']
+            if not isinstance(args['end_value'], list):
+                evt.end_value = args['end_value']
+            else:
+                evt.end_value = [x if x is not None else args['start_value'][i] for i, x in enumerate(args['end_value'])]
         else:
             evt.end_value = args['start_value']
+    else:
+        evt.end_value = args['start_value']
+
+    assert(evt.start_time is not None)
+    if isinstance(evt.end_time, list):
+        assert(all(x is not None for x in evt.end_time))
+    else:
+        assert(evt.end_time is not None)
+    assert(evt.start_value is not None)
+
+    if isinstance(evt.end_value, list):
+        assert(all(x is not None for x in evt.end_value))
+    else:
+        assert(evt.end_value is not None)
+
     return evt
 
 
@@ -250,7 +274,7 @@ def join_events(events):
 
         # group events by duration
         durations = {evt.duration for evt in command_events}
-        events_by_duration = {dur: [x for x in command_events if x.duration == dur] for dur in durations}
+        events_by_duration = {dur: [x for x in command_events if x.duration == dur] for dur in durations if dur != 0}
 
         # group together those with chained end/start times
         for dur, evts in events_by_duration.items():
@@ -258,6 +282,11 @@ def join_events(events):
 
             while len(sorted_events) > 0:
                 current_event = sorted_events[0]
+
+                # Skip!
+                #if current_event.start_time == current_event.end_time and \
+                #   current_event.start_value == current_event.end_value:
+                #   continue
 
                 # put in this shorthand object
                 current_event_group = SpriteMultievent(
@@ -612,6 +641,21 @@ A sprite with only the raw osu! commands.
         events = self.join_sub_events()
         return 'Sprite,{layer},{origin},"{file}",{sx:.0f},{sy:.0f}\n'.format(**dic) + events
 
+class TemporalSprite(Sprite):
+    def __init__(self, layer=Layer.Background, origin=Origin.TopLeft, file="", location=(0, 0)):
+        super().__init__(layer, origin, file, location)
+        self.active_periods = []
+
+    def add_active_period(self, period):
+        self.active_periods.append(period)
+    
+    def is_active_at(self, t_start, t_end):
+        for x in self.active_periods:
+            if not (t_end <= x[0] or  # "not outside of the segment"
+                   t_start >= x[1]):
+                return True
+        
+        return False
 
 class ExtSprite(Sprite):
     def __init__(self, layer=Layer.Background, origin=Origin.TopLeft, file="", location=(0, 0)):

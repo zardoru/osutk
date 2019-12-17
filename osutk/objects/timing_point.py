@@ -36,6 +36,14 @@ class TimingPoint(object):
         self.kiai = kiai
         """ Whether this TP is a kiai section. 1 for it is, 0 for it's not. """
 
+    @property
+    def bpm(self):
+        return 60000 / self.value
+
+    @property
+    def sv(self):
+        return -100 / self.value
+
     def __str__(self):
         """
         Get osu! representation of timing point.

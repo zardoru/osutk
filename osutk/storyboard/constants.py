@@ -142,5 +142,18 @@ class Screen(object):
     WidthWidescreen = 853
     Height = 480
 
+    HalfWidth = 320
+    HalfHeight = 240
+
     StartWidescreen = -106
     EndWidescreen = 746
+
+    @staticmethod
+    def is_point_inside(point, widescreen=False):
+        x, y = point[0], point[1]
+        if widescreen:
+            return Screen.StartWidescreen <= x <= Screen.EndWidescreen and \
+                   0 <= y <= Screen.Height
+        else:
+            return 0 <= x <= Screen.Width and \
+                   0 <= y <= Screen.Height

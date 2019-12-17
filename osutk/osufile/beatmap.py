@@ -73,6 +73,14 @@ class Beatmap(object):
         modes = ("std", "taiko", "ctb", "mania")
         return modes[int(self.general.Mode)]
 
+    @property
+    def circle_size(self):
+        return int(self.difficulty.CircleSize)
+
+    @property
+    def lane_count(self):
+        return self.circle_size
+
     def get_object_at_time(self, time):
         """
         Get the first declared hitobject at time.
@@ -98,16 +106,30 @@ class Beatmap(object):
          :param hitobject: Hitobject to read from.
          :return: The lane for an object given the beatmap properties.
         """
-        lanes = int(self.difficulty.CircleSize)
+        lanes = int(self.lane_count)
         lane_width = 512.0 / lanes
         if hitobject.x > 512.0:
             raise ValueError("The object's X (={}) is out of range.".format(hitobject.x))
         else:
             return int(hitobject.x / lane_width)
 
+    def get_lane_objects(self, lane):
+        return [hitobject for hitobject in self.objects if self.get_mania_lane(hitobject) == lane]
+
+    def get_last_object_time(self):
+        return max(map(lambda x: x.time, self.objects))
+
     def get_uninherited_points(self):
         return [x for x in self.timing_points if x.uninherited == 1]
 
+    def get_inherited_points(self):
+        return [x for x in self.timing_points if x.uninherited == 0]
+
+    def get_sv_time_pairs(self):
+        return [
+            (x.time, x.sv)
+            for x in self.get_inherited_points()
+        ]
 
 def read_from_file(filename):
     """
