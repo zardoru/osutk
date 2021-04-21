@@ -4,11 +4,13 @@ from osutk.storyboard.spritepool import TemporalSpritePool
 from osutk.storyboard import TemporalSprite, Sprite, Layer, Origin, Screen
 from numpy import arange
 
+
 # calculates a good constant for making a beat a specific number of px.
 # works with ScrollCtx below
 def px_per_beat(px_for_beat, basebpm, second_factor=1000):
     bps = basebpm / (60 * second_factor)
     return px_for_beat * bps
+
 
 class ScrollCtx(object):
     def _generate_accom_scroll(self, sv):
@@ -28,10 +30,10 @@ class ScrollCtx(object):
     # into a pixel unit. 
     def __init__(self, sv, speed=lambda x: 1):
         # an array of (time, sv)
-        self.sv = list(sorted(sv, key=lambda x: x[0])) 
+        self.sv = list(sorted(sv, key=lambda x: x[0]))
 
         # an array of (time, integral of sv at time)
-        self.accom_scroll = self._generate_accom_scroll(self.sv) 
+        self.accom_scroll = self._generate_accom_scroll(self.sv)
         self.accom_scroll_time = [x[0] for x in self.accom_scroll]
 
         # a function that returns the speed multiplier
@@ -52,19 +54,18 @@ class ScrollCtx(object):
         return (pos_obj - pos) * speed_mul
 
 
-
 # no long note support for now, maybe ever
 class Gear(object):
-    def __init__(self, 
-        x_start,
-        lane_images, 
-        lane_widths,
-        note_images, 
-        note_image_width, # actual image size
-        bg_image,
-        bg_size,
-        judgeline_image,
-        y_judgeline):
+    def __init__(self,
+                 x_start,
+                 lane_images,
+                 lane_widths,
+                 note_images,
+                 note_image_width,  # actual image size
+                 bg_image,
+                 bg_size,
+                 judgeline_image,
+                 y_judgeline):
         self.x_start = x_start
         self.lane_images = lane_images
         self.lane_widths = lane_widths
@@ -91,7 +92,7 @@ class Gear(object):
 
         if self.bg_image is None:
             return
-        
+
         if any(x == 0 for x in self.bg_size):
             print("Size is zero, not generating a gear background")
             return
@@ -101,12 +102,11 @@ class Gear(object):
 
         spr = Sprite(file=self.bg_image,
                      location=(self.x_start, 0))
-        
+
         # make it appear, and make it the right size
         spr.fade()
         spr.vector_scale(_sx=x_scale, _sy=y_scale)
         return spr
-
 
     # todo: arbitrary direction, given by unit 2d vector
     def generate_note(self, lane):
@@ -115,10 +115,10 @@ class Gear(object):
                              location=(self.lane_pos[lane], -100),
                              file=self.note_images[lane])
 
-        spr.vector_scale(_sx = self.lane_widths[lane] / self.note_image_width)
+        spr.vector_scale(_sx=self.lane_widths[lane] / self.note_image_width)
 
         return spr
-    
+
     def generate_judgeline(self, dst_width):
         spr = Sprite(origin=Origin.CentreLeft,
                      file=self.judgeline_image,
@@ -132,16 +132,16 @@ class Gear(object):
 
 
 class StoryboardMap(object):
-    def __init__(self, 
-    gear,
-    chart, 
-    framerate,
-    base_bpm,
-    beat_height,
-    speed_func=lambda x: 1):
+    def __init__(self,
+                 gear,
+                 chart,
+                 framerate,
+                 base_bpm,
+                 beat_height,
+                 speed_func=lambda x: 1):
         self.gear = gear
         self.chart = chart
-        self.framerate = framerate 
+        self.framerate = framerate
 
         self.base_bpm = base_bpm
         self.px_per_beat = px_per_beat(beat_height, base_bpm)
@@ -153,7 +153,7 @@ class StoryboardMap(object):
         self.pools = [TemporalSpritePool([]) for x in range(chart.lane_count)]
 
         self.scroll_ctx = ScrollCtx(
-            self.get_sv_time_pairs(chart), 
+            self.get_sv_time_pairs(chart),
             speed_func
         )
 
@@ -180,8 +180,8 @@ class StoryboardMap(object):
         for vis_test_time in arange(0, self.song_duration, time_interval):
             pos = self.scroll_ctx.get_object_position_at_time(vis_test_time, t_obj)
             screen_pos = self.scroll_to_screen_pos(lane, pos)
-            
-            #if pos > -10000:
+
+            # if pos > -10000:
             #    print(pos, screen_pos, vis_test_time)
 
             point_test_is_inside = Screen.is_point_inside(screen_pos, widescreen=True)
@@ -190,30 +190,29 @@ class StoryboardMap(object):
                 # check if we are going to begin  a visibility segment
                 # print("VISIBLE")
                 if start_vis is None:
-                    #print("start segment at {}      ".format(vis_test_time))
+                    # print("start segment at {}      ".format(vis_test_time))
                     start_vis = vis_test_time
                 else:
-                    pass # we're still in the visible segment checking
-            else: # not visible
+                    pass  # we're still in the visible segment checking
+            else:  # not visible
                 # print("NOT VISIBLE")
                 # was it visible before?
                 if start_vis is not None:
                     # close the segment
-                    #print("close segment at {}".format(vis_test_time))
+                    # print("close segment at {}".format(vis_test_time))
                     segments.append((start_vis, vis_test_time))
                     start_vis = None
                 else:
-                    pass # wasn't visible before
-        
+                    pass  # wasn't visible before
+
         return segments
-                    
 
     def storyboard_lane(self, lane, time_array):
         pool = self.pools[lane]
         for i, note in enumerate(time_array):
-            print ("processing {} of lane {}".format(i, lane), end="\r")
+            print("processing {} of lane {}".format(i, lane), end="\r")
             segments = self.get_visible_time_segments(lane, note)
-            print ("writing segments for {} of {} {}".format(i, lane, segments))
+            print("writing segments for {} of {} {}".format(i, lane, segments))
             for segment in segments:
                 sprite = pool.get_free(*segment)
                 if sprite is None:
@@ -232,23 +231,23 @@ class StoryboardMap(object):
 
                     # make use of the fact that variables latch
                     if screen_pos[1] != prev_screen_pos[1]:
-                        sprite.move_y(_st=time-frametime, _et=time, 
-                                    _sy=prev_screen_pos[1], _ey=screen_pos[1])
+                        sprite.move_y(_st=time - frametime, _et=time,
+                                      _sy=prev_screen_pos[1], _ey=screen_pos[1])
                     if screen_pos[0] != prev_screen_pos[0]:
-                        sprite.move_y(_st=time-frametime, _et=time, 
+                        sprite.move_y(_st=time - frametime, _et=time,
                                       _sx=prev_screen_pos[0], _ex=screen_pos[0])
 
-                
                 sprite.add_active_period(segment)
 
     def generate_storyboard(self):
         self.gear.generate_gear()
-        
+
         for lane in range(self.chart.lane_count):
             self.storyboard_lane(lane, map(lambda x: x.time, self.chart.get_lane_objects(lane)))
 
         for pool in self.pools:
             pool.auto_fade_objects()
+
 
 if __name__ in "__main__":
     ctx = ScrollCtx([(500, 1), (1500, 2), (2500, 1)], lambda x: 1 if x < 2500 else 2)
@@ -260,4 +259,3 @@ if __name__ in "__main__":
     print(2000, ctx.get_displacement_at_time(2000))
     print(2500, ctx.get_displacement_at_time(2500))
     print(3000, ctx.get_displacement_at_time(3000))
-        

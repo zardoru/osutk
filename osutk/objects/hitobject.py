@@ -20,6 +20,11 @@ class HitObject(object):
     NEW_COMBO_4 = 64
     HOLD = 128
 
+    SND_NORMAL = 1
+    SND_WHISTLE = 2
+    SND_FINISH = 4
+    SND_CLAP = 8
+
     # 4, 8, 16, 32, 64 = New Combo as well. (from aibat)
     COMBO_MASK = 4 | 8 | 16 | 32 | 64
 
@@ -97,7 +102,7 @@ class HitObject(object):
         """
         return "{},{},{},{},{},{}".format(self.x,
                                           self.y,
-                                          self.time,
+                                          int(self.time),
                                           self.type,
                                           self.hitsound,
                                           self.get_additive_str())

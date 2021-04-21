@@ -9,6 +9,7 @@ class Color(object):
     """
     A combo color.
     """
+
     def __init__(self, r=255, g=255, b=255):
         self.Red = r
         """ The red value for this combo """
@@ -117,7 +118,7 @@ class Beatmap(object):
         return [hitobject for hitobject in self.objects if self.get_mania_lane(hitobject) == lane]
 
     def get_last_object_time(self):
-        return max(map(lambda x: x.time, self.objects))
+        return max([x.time for x in self.objects])
 
     def get_uninherited_points(self):
         return [x for x in self.timing_points if x.uninherited == 1]
@@ -125,11 +126,39 @@ class Beatmap(object):
     def get_inherited_points(self):
         return [x for x in self.timing_points if x.uninherited == 0]
 
+    def sort_timing_points(self):
+        self.timing_points = list(sorted(self.timing_points, key=lambda x: x.time))
+
+    # Assumes times are sorted
+    def get_effective_timing_point(self, time):
+        current = self.timing_points[0]
+        for tp in self.timing_points:
+            if time >= tp.time > current.time:
+                current = tp
+
+            if tp.time > time:
+                break
+
+        return current
+
+    def get_effective_addition_set(self, obj):
+        if obj.addition != 0:
+            return obj.addition
+        else:
+            if obj.sample_set != 0:
+                return obj.sample_set
+
+            return self.get_effective_timing_point(obj.time).sample_set
+
     def get_sv_time_pairs(self):
         return [
             (x.time, x.sv)
             for x in self.get_inherited_points()
         ]
+
+    def get_distinct_times(self):
+        return set(x.time for x in self.objects)
+
 
 def read_from_file(filename):
     """
