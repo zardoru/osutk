@@ -35,6 +35,10 @@ class Beatmap(object):
         Indices are numbers, meaning ComboN has as key N. Colors have the form Color.Red/Green/Blue
         as bytes from range 0 to 255 when the map is valid. """
 
+        self.events = []
+        """ A list containing all lines from the Events section. Unparsed.
+        """
+
         self.metadata = lambda: None
         """ Metadata for this beatmap. Does not follow python naming conventions!
          It's a 1:1 mapping of attributes from the [Metadata] section.
@@ -50,6 +54,11 @@ class Beatmap(object):
         self.difficulty = lambda: None
         """
         Same as before, except for the [Difficulty] section.
+        """
+
+        self.editor = lambda: None
+        """
+        Same, but the [Editor] section.
         """
 
     @property
@@ -81,6 +90,10 @@ class Beatmap(object):
     @property
     def lane_count(self):
         return self.circle_size
+
+    @lane_count.setter
+    def lane_count(self, new_count):
+        self.difficulty.CircleSize = new_count
 
     def get_object_at_time(self, time):
         """
@@ -114,6 +127,10 @@ class Beatmap(object):
         else:
             return int(hitobject.x / lane_width)
 
+    def get_mania_lane_x(self, lane):
+        lane_width = 512.0 / int(self.lane_count)
+        return int(lane * lane_width + lane_width / 2)
+
     def get_lane_objects(self, lane):
         return [hitobject for hitobject in self.objects if self.get_mania_lane(hitobject) == lane]
 
@@ -141,6 +158,12 @@ class Beatmap(object):
 
         return current
 
+    def get_effective_sample_set(self, obj):
+        if obj.sample_set != 0:
+            return obj.sample_set
+        else:
+            return self.get_effective_timing_point(obj.time).sample_set.get_osu_kind_index()
+
     def get_effective_addition_set(self, obj):
         if obj.addition != 0:
             return obj.addition
@@ -148,7 +171,37 @@ class Beatmap(object):
             if obj.sample_set != 0:
                 return obj.sample_set
 
-            return self.get_effective_timing_point(obj.time).sample_set
+            return self.get_effective_timing_point(obj.time).sample_set.get_osu_kind_index()
+
+    def get_effective_sounds(self, obj):
+        """
+
+        @param obj: a hitobject
+        @return: a single elemnt array with the custom sample filename,
+        or an array where each element is a tuple that
+        contain the soundset (normal, soft, drum), index and sound (normal, whistle, finish, clap).
+        """
+        if len(obj.custom_sample) > 4:
+            return [obj.custom_sample]
+
+        if obj.hitsound != 0:  # has an addition
+            sounds_list = []
+
+            # if it has a SND_NORMAL, add an SND_NORMAL with the addition set and custom set indicated.
+            for hitsound_type in HitObject.SOUND_TYPES:
+                addition_set = self.get_effective_addition_set(obj)
+                if obj.hitsound & hitsound_type:
+                    custom_set = obj.custom_set if obj.custom_set == 0 \
+                                                else self.get_effective_timing_point(obj.time).custom_set
+
+                    sounds_list.append((addition_set, custom_set, hitsound_type))
+
+            return sounds_list
+        else:
+            custom_set = obj.custom_set if obj.custom_set == 0 \
+                else self.get_effective_timing_point(obj.time).custom_set
+
+            return [(self.get_effective_sample_set(obj), custom_set, HitObject.SND_NORMAL)]
 
     def get_sv_time_pairs(self):
         return [
@@ -187,6 +240,9 @@ def read_from_file(filename):
         match = re.match(color_regex, line)
         if match is not None:
             colors[int(match.group(1))] = Color(r=int(match.group(2)), g=int(match.group(3)), b=int(match.group(4)))
+
+    def read_event(events, line):
+        events.append(line)
 
     def read_hitobject(output_list, line):
         output_list.append(HitObject.from_string(line))
@@ -228,6 +284,10 @@ def read_from_file(filename):
                     read_color(output.colors, line)
                 elif section == "HitObjects":
                     read_hitobject(output.objects, line)
+                elif section == "Editor":
+                    read_attributes(output.editor, line)
+                elif section == "Events":
+                    read_event(output.events, line)
 
     with open(filename) as in_file:
         # Read all sections.
@@ -235,6 +295,38 @@ def read_from_file(filename):
         load_sections()
 
     return output
+
+
+def write_to_file(beatmap, file_output):
+    def write_attributes(area):
+        for key in area.__dict__.keys():
+            value = getattr(area, key)
+            file_output.write("{}:{}\n".format(key, value))
+
+    file_output.write("osu file format v{}\n\n".format(beatmap.version))
+
+    file_output.write("[General]\n")
+    write_attributes(beatmap.general)
+
+    file_output.write("\n[Editor]\n")
+    write_attributes(beatmap.editor)
+
+    file_output.write("\n[Metadata]\n")
+    write_attributes(beatmap.metadata)
+
+    file_output.write("\n[Difficulty]\n")
+    write_attributes(beatmap.difficulty)
+
+    file_output.write("\n[Events]\n")
+    file_output.writelines(x + "\n" for x in beatmap.events)
+
+    file_output.write("\n[TimingPoints]\n")
+    file_output.writelines(str(x) + "\n" for x in beatmap.timing_points)
+
+    file_output.write("\n[HitObjects]\n")
+    file_output.writelines(str(x) + "\n" for x in beatmap.objects)
+
+    file_output.flush()
 
 
 def replace_timing_section(in_filename, out_filename, tp):

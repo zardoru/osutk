@@ -1,6 +1,6 @@
 *.pyc
-.idea
 *.osb
 *.wav
 docs/build
 dist
+venv

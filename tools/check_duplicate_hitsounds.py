@@ -45,32 +45,6 @@ def deduplicate(duplicates):
         o2.hitsound &= (15 ^ sounds)
 
 
-def main():
-    beatmap = read_from_file(sys.argv[1])
-    beatmap.sort_timing_points()
-    duplicates = find_all_duplicates(beatmap)
-
-    if len(duplicates) == 0:
-        print("No duplicates found.")
-        return
-
-    unique_duplicate_times = set(x[0] for x in duplicates)
-
-    if "-p" in sys.argv:
-        print_results(duplicates, unique_duplicate_times)
-
-    if "-d" in sys.argv:
-        passes = 0
-        while len(duplicates) > 0:
-            deduplicate(duplicates)
-            duplicates = find_all_duplicates(beatmap)
-            passes = 1
-
-        print("Deduplicated in {} pass(es)".format(passes))
-        for x in beatmap.objects:
-            print(str(x))
-
-
 def find_all_duplicates(beatmap):
     moments = beatmap.get_distinct_times()
     duplicates = []
@@ -109,5 +83,31 @@ def print_results(duplicates, unique_duplicate_times):
         print("{0} - ".format(to_osu_time_notation(t)))
 
 
+def main(filename, should_print_results, should_deduplicate):
+    beatmap = read_from_file(filename)
+    beatmap.sort_timing_points()
+    duplicates = find_all_duplicates(beatmap)
+
+    if len(duplicates) == 0:
+        print("No duplicates found.")
+        return
+
+    unique_duplicate_times = set(x[0] for x in duplicates)
+
+    if should_print_results:
+        print_results(duplicates, unique_duplicate_times)
+
+    if should_deduplicate:
+        # passes = 0
+        while len(duplicates) > 0:
+            deduplicate(duplicates)
+            duplicates = find_all_duplicates(beatmap)
+            # passes = 1
+
+        # print("Deduplicated in {} pass(es)".format(passes))
+        for x in beatmap.objects:
+            print(str(x))
+
+
 if __name__ == '__main__':
-    main()
+    main(sys.argv[1], "-p" in sys.argv, "-d" in sys.argv)

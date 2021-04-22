@@ -34,4 +34,4 @@ class SampleSet(object):
         self.kind = SampleSet.kind_from_index(index)
 
     def get_osu_kind_index(self):
-        return SampleSet.set_kinds.index(self.kind) + 1
+        return SampleSet.set_kinds.index(self.kind)

@@ -25,6 +25,8 @@ class HitObject(object):
     SND_FINISH = 4
     SND_CLAP = 8
 
+    SOUND_TYPES = [SND_NORMAL, SND_WHISTLE, SND_FINISH, SND_CLAP]
+
     # 4, 8, 16, 32, 64 = New Combo as well. (from aibat)
     COMBO_MASK = 4 | 8 | 16 | 32 | 64
 

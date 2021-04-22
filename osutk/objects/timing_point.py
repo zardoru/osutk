@@ -49,12 +49,12 @@ class TimingPoint(object):
         Get osu! representation of timing point.
         :return: osu! representation as string for this timing point
         """
-        return "{},{},{},{},{},{},{},{}".format(self.time,
+        return "{},{},{},{},{},{},{},{}".format(int(self.time),
                                                 self.value,
-                                                self.beats_per_measure,
+                                                int(self.beats_per_measure),
                                                 self.sample_set.get_osu_kind_index(),
                                                 self.sample_set.custom_set,
-                                                self.sample_set.volume,
+                                                int(self.sample_set.volume),
                                                 self.uninherited,
                                                 self.kiai)
 
