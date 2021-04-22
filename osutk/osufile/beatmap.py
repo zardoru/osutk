@@ -179,7 +179,8 @@ class Beatmap(object):
         @param obj: a hitobject
         @return: a single elemnt array with the custom sample filename,
         or an array where each element is a tuple that
-        contain the soundset (normal, soft, drum), index and sound (normal, whistle, finish, clap).
+        contain the soundset (normal, soft, drum), index, sound (normal, whistle, finish, clap), and whether
+        the sound, soundset and index are all deduced from context.
         """
         if len(obj.custom_sample) > 4:
             return [obj.custom_sample]
@@ -194,14 +195,15 @@ class Beatmap(object):
                     custom_set = obj.custom_set if obj.custom_set == 0 \
                                                 else self.get_effective_timing_point(obj.time).custom_set
 
-                    sounds_list.append((addition_set, custom_set, hitsound_type))
+                    sounds_list.append((addition_set, custom_set, hitsound_type, False))
 
             return sounds_list
         else:
             custom_set = obj.custom_set if obj.custom_set == 0 \
                 else self.get_effective_timing_point(obj.time).custom_set
 
-            return [(self.get_effective_sample_set(obj), custom_set, HitObject.SND_NORMAL)]
+            sampleset = self.get_effective_sample_set(obj)
+            return [(sampleset, custom_set, HitObject.SND_NORMAL, obj.custom_set == 0 and obj.sample_set == 0)]
 
     def get_sv_time_pairs(self):
         return [

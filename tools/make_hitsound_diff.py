@@ -17,6 +17,10 @@ def main(filename):
         # get all of the distinct sounds at this time
         time_sounds = set(snd for obj in objs for snd in beatmap.get_effective_sounds(obj))
 
+        # remove the sounds that are completely deduced,
+        # leaving only sounds that were actually set
+        time_sounds = set(snd for snd in time_sounds if not snd[3])
+
         # add the distinct sounds to our list of
         # distinct sounds in the totality of the map
         for x in time_sounds:
