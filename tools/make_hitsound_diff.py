@@ -19,7 +19,7 @@ def main(filename):
 
         # remove the sounds that are completely deduced,
         # leaving only sounds that were actually set
-        time_sounds = set(snd for snd in time_sounds if not snd[3])
+        time_sounds = set(snd for snd in time_sounds if not snd.is_auto)
 
         # add the distinct sounds to our list of
         # distinct sounds in the totality of the map
@@ -31,7 +31,7 @@ def main(filename):
 
     print(
         "{} unique sounds found over {} different timestamps."
-            .format(len(distinct_sound_combinations), len(moments)),
+        .format(len(distinct_sound_combinations), len(moments)),
         file=sys.stderr
     )
 
@@ -39,7 +39,7 @@ def main(filename):
     if lanes > 18 or lanes == 0:
         print(
             "{} is an unreasonable number of lanes. I'll do my best."
-                .format(lanes),
+            .format(lanes),
             file=sys.stderr
         )
 
@@ -61,14 +61,14 @@ def main(filename):
 
             if type(sound) == str:
                 obj = HitCircle(beatmap.get_mania_lane_x(lane), 240, t, 0)
-                obj.custom_sample = sound
+                obj.custom_sample = sound.custom_sample
             else:
-                obj = HitCircle(beatmap.get_mania_lane_x(lane), 240, t, sound[2])
-                obj.custom_set = sound[1]
-                obj.sample_set = sound[0]
+                obj = HitCircle(beatmap.get_mania_lane_x(lane), 240, t, sound.hitsound)
+                obj.custom_set = sound.custom_set
+                obj.sample_set = sound.sample_set
 
                 if sound[2] & HitObject.SND_NORMAL != 0:
-                    obj.addition = sound[0]
+                    obj.addition = sound.sample_set
 
             new_objects.append(obj)
 

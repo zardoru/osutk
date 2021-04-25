@@ -142,6 +142,13 @@ class HitObject(object):
         except Exception as e:
             raise ValueError("Invalid object string: {}. Exception: {}".format(string, e))
 
+    def reset_hitsound(self):
+        self.hitsound = 0
+        self.addition = 0
+        self.custom_sample = ""
+        self.custom_set = 0
+        self.sample_set = 0
+
 
 def default_int(s):
     try:

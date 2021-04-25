@@ -19,6 +19,65 @@ class Color(object):
         """The blue value for this combo """
 
 
+class Hitsound(object):
+    def __init__(self, sample_set=0, custom_set=0, hitsound=0, is_auto=True, custom_sample=""):
+        self.sample_set = sample_set
+        self.custom_set = custom_set
+        self.hitsound = hitsound
+        self._is_auto = is_auto
+        self.custom_sample = custom_sample
+
+    @property
+    def is_auto(self):
+        return False if len(self.custom_sample) > 4 else self._is_auto
+
+    @property
+    def is_custom_sample(self):
+        return len(self.custom_sample) > 4
+
+    def __hash__(self):
+        if len(self.custom_sample) > 4:
+            return hash(self.custom_sample)
+
+        return hash((self.sample_set, self.custom_set, self.hitsound, self._is_auto))
+
+    def __eq__(self, other):
+        if len(self.custom_sample) > 4:
+            eq1 = self.custom_sample
+        else:
+            eq1 = (self.sample_set, self.custom_set, self.hitsound, self._is_auto)
+
+        if len(other.custom_sample) > 4:
+            eq2 = other.custom_sample
+        else:
+            eq2 = (other.sample_set, other.custom_set, other.hitsound, other._is_auto)
+
+        return eq1 == eq2
+
+    def __ne__(self, other):
+        return not self.__eq__(other)
+
+    def __getitem__(self, item):
+        if item == 0:
+            return self.sample_set
+        if item == 1:
+            return self.custom_set
+        if item == 2:
+            return self.hitsound
+        if item == 3:
+            return self.is_auto
+
+    def __setitem__(self, key, value):
+        if key == 0:
+            self.sample_set = value
+        if key == 1:
+            self.custom_set = value
+        if key == 2:
+            self.hitsound = value
+        if key == 3:
+            self.is_auto = value
+
+
 class Beatmap(object):
     def __init__(self):
 
@@ -183,7 +242,7 @@ class Beatmap(object):
         the sound, soundset and index are all deduced from context.
         """
         if len(obj.custom_sample) > 4:
-            return [obj.custom_sample]
+            return [Hitsound(custom_sample=obj.custom_sample)]
 
         if obj.hitsound != 0:  # has an addition
             sounds_list = []
@@ -193,9 +252,9 @@ class Beatmap(object):
                 addition_set = self.get_effective_addition_set(obj)
                 if obj.hitsound & hitsound_type:
                     custom_set = obj.custom_set if obj.custom_set == 0 \
-                                                else self.get_effective_timing_point(obj.time).custom_set
+                        else self.get_effective_timing_point(obj.time).custom_set
 
-                    sounds_list.append((addition_set, custom_set, hitsound_type, False))
+                    sounds_list.append(Hitsound(addition_set, custom_set, hitsound_type, False))
 
             return sounds_list
         else:
@@ -203,7 +262,7 @@ class Beatmap(object):
                 else self.get_effective_timing_point(obj.time).custom_set
 
             sampleset = self.get_effective_sample_set(obj)
-            return [(sampleset, custom_set, HitObject.SND_NORMAL, obj.custom_set == 0 and obj.sample_set == 0)]
+            return [Hitsound(sampleset, custom_set, HitObject.SND_NORMAL, obj.custom_set == 0 and obj.sample_set == 0)]
 
     def get_sv_time_pairs(self):
         return [
