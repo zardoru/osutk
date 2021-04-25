@@ -4,3 +4,8 @@
 docs/build
 dist
 venv
+build
+/dst.osu
+/dst.osu.bak
+/DUPLICATE_test.osu
+/src.osu
