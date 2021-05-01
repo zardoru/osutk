@@ -20,12 +20,13 @@ class Color(object):
 
 
 class Hitsound(object):
-    def __init__(self, sample_set=0, custom_set=0, hitsound=0, is_auto=True, custom_sample=""):
+    def __init__(self, sample_set=0, custom_set=0, hitsound=0, is_auto=True, custom_sample="", obj=None):
         self.sample_set = sample_set
         self.custom_set = custom_set
         self.hitsound = hitsound
         self._is_auto = is_auto
         self.custom_sample = custom_sample
+        self.obj = obj
 
     @property
     def is_auto(self):
@@ -95,8 +96,12 @@ class Beatmap(object):
         as bytes from range 0 to 255 when the map is valid. """
 
         self.events = []
-        """ A list containing all lines from the Events section. Unparsed.
+        """ A list containing all lines from the Events section. Unparsed, though it excludes storyboard samples
+        which are parsed into self.sb_samples.
         """
+
+        self.sb_samples = []
+        """ A list containing tuples of (time, layer, filename, volume) from sample events from the storyboard. """
 
         self.metadata = lambda: None
         """ Metadata for this beatmap. Does not follow python naming conventions!
@@ -242,7 +247,7 @@ class Beatmap(object):
         the sound, soundset and index are all deduced from context.
         """
         if len(obj.custom_sample) > 4:
-            return [Hitsound(custom_sample=obj.custom_sample)]
+            return [Hitsound(custom_sample=obj.custom_sample, obj=obj)]
 
         if obj.hitsound != 0:  # has an addition
             sounds_list = []
@@ -254,7 +259,7 @@ class Beatmap(object):
                     custom_set = obj.custom_set if obj.custom_set == 0 \
                         else self.get_effective_timing_point(obj.time).custom_set
 
-                    sounds_list.append(Hitsound(addition_set, custom_set, hitsound_type, False))
+                    sounds_list.append(Hitsound(addition_set, custom_set, hitsound_type, False, obj=obj))
 
             return sounds_list
         else:
@@ -262,7 +267,13 @@ class Beatmap(object):
                 else self.get_effective_timing_point(obj.time).custom_set
 
             sampleset = self.get_effective_sample_set(obj)
-            return [Hitsound(sampleset, custom_set, HitObject.SND_NORMAL, obj.custom_set == 0 and obj.sample_set == 0)]
+            return [Hitsound(
+                sampleset,
+                custom_set,
+                HitObject.SND_NORMAL,
+                obj.custom_set == 0 and obj.sample_set == 0,
+                obj=obj
+            )]
 
     def get_sv_time_pairs(self):
         return [
@@ -272,6 +283,9 @@ class Beatmap(object):
 
     def get_distinct_times(self):
         return set(x.time for x in self.objects)
+
+    def get_storyboard_samples(self):
+        pass
 
 
 def read_from_file(filename):
@@ -302,8 +316,12 @@ def read_from_file(filename):
         if match is not None:
             colors[int(match.group(1))] = Color(r=int(match.group(2)), g=int(match.group(3)), b=int(match.group(4)))
 
-    def read_event(events, line):
-        events.append(line)
+    def read_event(events, samples, line):
+        if line.lstrip(chars=' _').startswith("Sample"):
+            entries = line.lstrip(chars=' _').split(',')[1:]
+            samples.append((int(entries[0]), *entries[1:]))
+        else:
+            events.append(line)
 
     def read_hitobject(output_list, line):
         output_list.append(HitObject.from_string(line))
@@ -348,7 +366,7 @@ def read_from_file(filename):
                 elif section == "Editor":
                     read_attributes(output.editor, line)
                 elif section == "Events":
-                    read_event(output.events, line)
+                    read_event(output.events, output.sb_samples, line)
 
     with open(filename) as in_file:
         # Read all sections.
