@@ -70,6 +70,27 @@ class HitObject(object):
             If not empty, overrides sample_set, addition and custom_set to 0.
         """
 
+    def _tuple(self):
+        return (self.x, self.y,
+             self.time,
+             self.hitsound,
+             self.sample_set,
+             self.addition,
+             self.custom_set,
+             self.volume,
+             self.custom_sample)
+
+    def __hash__(self):
+        return hash(self._tuple())
+
+    def __eq__(self, other):
+        if type(other) is not HitObject:
+            return
+        return self._tuple() == other._tuple()
+
+    def __ne__(self, other):
+        return not self.__eq__(other)
+
     def set_addition(self, add_dt):
         """
         Set the addition data from the array resulting of splitting the

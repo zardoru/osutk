@@ -1,4 +1,4 @@
-from osutk.osufile.beatmap import read_from_file, write_to_file
+from osutk.osufile.beatmap import read_from_file, write_to_file, Hitsound
 from osutk.objects.hitobject import HitObject, HitCircle
 import sys
 
@@ -16,6 +16,11 @@ def main(filename):
 
         # get all of the distinct sounds at this time
         time_sounds = set(snd for obj in objs for snd in beatmap.get_effective_sounds(obj))
+
+        sb_obj_t = [x for x in beatmap.sb_samples if x[0] == t]
+
+        for x in sb_obj_t:
+            time_sounds.add(Hitsound(custom_sample=x[2]))
 
         # remove the sounds that are completely deduced,
         # leaving only sounds that were actually set
@@ -43,7 +48,7 @@ def main(filename):
             file=sys.stderr
         )
 
-    beatmap.lane_count = lanes
+    beatmap.lane_count = min(lanes, 18)
 
     # map tuples to lanes
     lane_map = {}
@@ -54,15 +59,24 @@ def main(filename):
 
     print("Generating hitobjects...", file=sys.stderr)
     new_objects = []
+    sb_obj = []
     for t in sounds_at_time.keys():
         sounds_list = sounds_at_time[t]
         for sound in sounds_list:
+            obj = None
             lane = lane_map[sound]
 
-            if type(sound) == str:
-                obj = HitCircle(beatmap.get_mania_lane_x(lane), 240, t, 0)
-                obj.custom_sample = sound.custom_sample
+            if sound.is_custom_sample:
+                if lane > 18:
+                    sb_obj.append((t, 0, sound.custom_sample))
+                else:
+                    obj = HitCircle(beatmap.get_mania_lane_x(lane), 240, t, 0)
+                    obj.custom_sample = sound.custom_sample
+
             else:
+                if lane > 18:
+                    continue  # TODO: maybe make it so if it's a custom set, we translate that to a custom sample?
+
                 obj = HitCircle(beatmap.get_mania_lane_x(lane), 240, t, sound.hitsound)
                 obj.custom_set = sound.custom_set
                 obj.sample_set = sound.sample_set
@@ -70,10 +84,12 @@ def main(filename):
                 if sound[2] & HitObject.SND_NORMAL != 0:
                     obj.addition = sound.sample_set
 
-            new_objects.append(obj)
+            if obj is not None:
+                new_objects.append(obj)
 
     beatmap.metadata.Version = "drgn.hitsounds"
     beatmap.objects = new_objects
+    beatmap.sb_samples = sb_obj
 
     print("Done. Writing output.", file=sys.stderr)
     write_to_file(beatmap, sys.stdout)

@@ -76,7 +76,7 @@ class Hitsound(object):
         if key == 2:
             self.hitsound = value
         if key == 3:
-            self.is_auto = value
+            self._is_auto = value
 
 
 class Beatmap(object):
@@ -398,6 +398,7 @@ def write_to_file(beatmap, file_output):
 
     file_output.write("\n[Events]\n")
     file_output.writelines(x + "\n" for x in beatmap.events)
+    file_output.writelines("Sample," + ",".join(str(i) for i in x) + '\n' for x in beatmap.sb_samples)
 
     file_output.write("\n[TimingPoints]\n")
     file_output.writelines(str(x) + "\n" for x in beatmap.timing_points)

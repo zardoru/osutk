@@ -130,7 +130,7 @@ def main(filename_src,
     sb_sounds_out = set(x[:3] for x in beatmap_dst.sb_sounds)
 
     if not strictly_additive:
-        sb_sounds_out = []
+        sb_sounds_out = set()
         for obj in beatmap_dst.objects:
             obj.reset_hitsound()
 
@@ -163,7 +163,7 @@ def main(filename_src,
         if len(objs_dst) == 0:
             if len(time_sounds_src) > 0:
                 # informative, but a little spammy. just in case it's useful.
-                print("no sounds at {} to put {} sounds.".format(t, len(time_sounds_src)))
+                print("no objects at {} to put {} sounds.".format(t, len(time_sounds_src)))
             continue
 
         # get the list of all sounds for the objects of the destination at this time.
@@ -207,6 +207,8 @@ def main(filename_src,
         for snd in time_sounds_pre_existing:
             if snd.obj is not None:
                 last_sounds[snd] = snd.obj.x
+
+    beatmap_dst.sb_samples = sb_sounds_out
 
     print("Backing up original file {} to {}.".format(filename_dst, filename_dst + '.bak'))
     copyfile(filename_dst, filename_dst + '.bak')
