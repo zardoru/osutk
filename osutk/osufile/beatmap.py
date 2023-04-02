@@ -172,7 +172,7 @@ class Beatmap(object):
             return x
         return None
 
-    def get_objects_at_time(self, time):
+    def get_objects_at_time(self, time: float):
         """
         Get list of objects that overlap at time.
          :param time: Time to look for hitobjects.
@@ -232,8 +232,8 @@ class Beatmap(object):
             return self.get_effective_timing_point(obj.time).sample_set.get_osu_kind_index()
 
     def get_effective_addition_set(self, obj):
-        if obj.addition != 0:
-            return obj.addition
+        if obj.addition_set != 0:
+            return obj.addition_set
         else:
             if obj.sample_set != 0:
                 return obj.sample_set

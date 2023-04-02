@@ -20,10 +20,10 @@ class HitObject(object):
     NEW_COMBO_4 = 64
     HOLD = 128
 
-    SND_NORMAL = 1
-    SND_WHISTLE = 2
-    SND_FINISH = 4
-    SND_CLAP = 8
+    SND_NORMAL = 0
+    SND_WHISTLE = 1
+    SND_FINISH = 2
+    SND_CLAP = 4
 
     SOUND_TYPES = [SND_NORMAL, SND_WHISTLE, SND_FINISH, SND_CLAP]
 
@@ -51,7 +51,7 @@ class HitObject(object):
         """
             The numerical value of the sample set of this object.
         """
-        self.addition = 0
+        self.addition_set = 0
         """
             The numerical value of the additional hitsound of this object.
         """
@@ -75,7 +75,7 @@ class HitObject(object):
              self.time,
              self.hitsound,
              self.sample_set,
-             self.addition,
+             self.addition_set,
              self.custom_set,
              self.volume,
              self.custom_sample)
@@ -99,7 +99,7 @@ class HitObject(object):
         :return:
         """
         self.sample_set = add_dt[0] if len(add_dt) > 0 else 0
-        self.addition = add_dt[1] if len(add_dt) > 1 else 0
+        self.addition_set = add_dt[1] if len(add_dt) > 1 else 0
         self.custom_set = add_dt[2] if len(add_dt) > 2 else 0
         self.volume = add_dt[3] if len(add_dt) > 3 else 0
         self.custom_sample = add_dt[4] if len(add_dt) > 4 else ""
@@ -113,7 +113,7 @@ class HitObject(object):
             s = "0:0:0:{}:{}".format(self.volume, self.custom_sample)
         else:
             s = "{}:{}:{}:{}:".format(self.sample_set,
-                                      self.addition,
+                                      self.addition_set,
                                       self.custom_set,
                                       self.volume)
         return s
@@ -165,7 +165,7 @@ class HitObject(object):
 
     def reset_hitsound(self):
         self.hitsound = 0
-        self.addition = 0
+        self.addition_set = 0
         self.custom_sample = ""
         self.custom_set = 0
         self.sample_set = 0

@@ -5,7 +5,7 @@ from osutk.objects.hitobject import HitObject, HitCircle
 import sys
 
 
-def generate(in_filename, diffname, msgfn):
+def generate(in_filename: str, diffname: str, msgfn):
     msgfn("Reading beatmap from '{}'...".format(in_filename))
     beatmap = read_from_file(in_filename)
     moments = beatmap.get_distinct_times()
@@ -82,7 +82,7 @@ def generate(in_filename, diffname, msgfn):
                 obj.sample_set = sound.sample_set
 
                 if sound[2] & HitObject.SND_NORMAL != 0:
-                    obj.addition = sound.sample_set
+                    obj.addition_set = sound.sample_set
 
             if obj is not None:
                 new_objects.append(obj)

@@ -126,7 +126,7 @@ def copy_sounds(
             obj.hitsound = snd.hitsound
 
             if snd.hitsound > 0:
-                obj.addition = snd.sample_set
+                obj.addition_set = snd.sample_set
 
     return reminder
 
