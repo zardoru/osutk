@@ -377,9 +377,11 @@ def open_gui():
         out = output_filename.get("1.0", ui.END).strip()
 
         if not os.path.isfile(inp):
+            print_msg("couldn't find or access file {}.".format(inp))
             return
 
         if not os.path.isfile(out):
+            print_msg("couldn't find or access file {}.".format(out))
             return
 
         # clear the output thingy

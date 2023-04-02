@@ -1,14 +1,16 @@
+import os.path
+
 from osutk.osufile.beatmap import read_from_file, write_to_file, Hitsound
 from osutk.objects.hitobject import HitObject, HitCircle
 import sys
 
 
-def main(filename):
-    print("Reading beatmap...", file=sys.stderr)
-    beatmap = read_from_file(filename)
+def generate(in_filename, diffname, msgfn):
+    msgfn("Reading beatmap from '{}'...".format(in_filename))
+    beatmap = read_from_file(in_filename)
     moments = beatmap.get_distinct_times()
 
-    print("Analyzing...", file=sys.stderr)
+    msgfn("Analyzing...")
     distinct_sound_combinations = set()
     sounds_at_time = {}
     for t in moments:
@@ -34,18 +36,16 @@ def main(filename):
         # add to our dictionary of sounds at different times
         sounds_at_time[t] = time_sounds
 
-    print(
+    msgfn(
         "{} unique sounds found over {} different timestamps."
-        .format(len(distinct_sound_combinations), len(moments)),
-        file=sys.stderr
+        .format(len(distinct_sound_combinations), len(moments))
     )
 
     lanes = len(distinct_sound_combinations)
     if lanes > 18 or lanes == 0:
-        print(
+        msgfn(
             "{} is an unreasonable number of lanes. I'll do my best."
-            .format(lanes),
-            file=sys.stderr
+            .format(lanes)
         )
 
     beatmap.lane_count = min(lanes, 18)
@@ -57,7 +57,7 @@ def main(filename):
         lane_map[item] = lane_index
         lane_index += 1
 
-    print("Generating hitobjects...", file=sys.stderr)
+    msgfn("Generating hitobjects...")
     new_objects = []
     sb_obj = []
     for t in sounds_at_time.keys():
@@ -87,13 +87,96 @@ def main(filename):
             if obj is not None:
                 new_objects.append(obj)
 
-    beatmap.metadata.Version = "drgn.hitsounds"
+    beatmap.metadata.Version = diffname
     beatmap.objects = new_objects
     beatmap.sb_samples = sb_obj
 
-    print("Done. Writing output.", file=sys.stderr)
-    write_to_file(beatmap, sys.stdout)
+    (directory, _) = os.path.split(os.path.abspath(in_filename))
+    ofn = "{} - {} ({}) [{}].osu".format(
+        beatmap.metadata.Artist,
+        beatmap.metadata.Title,
+        beatmap.metadata.Creator,
+        diffname,
+    )
+
+    out_path = os.path.join(directory, ofn)
+    msgfn("Done. Writing output to {}.".format(out_path))
+
+    with open(out_path, "w") as output:
+        write_to_file(beatmap, output)
 
 
 if __name__ == '__main__':
-    main(sys.argv[1])
+    import tkinter as ui
+    import tkinter.filedialog as fd
+
+    root = ui.Tk()
+    root.title("agka's pragmatic hitsound difficulty generator")
+
+    lr_pane = ui.PanedWindow(root)
+    lr_pane.pack(padx=10, pady=10, ipady=10, ipadx=10, side=ui.TOP, expand=1, fill=ui.BOTH)
+
+    # Input section
+    in_frame = ui.LabelFrame(lr_pane, text="input")
+    in_frame.pack(ipadx=10, ipady=10, expand=1, fill=ui.BOTH, side=ui.LEFT)
+
+    in_pane = ui.Frame(in_frame)
+    in_pane.pack(expand=1, fill=ui.BOTH)
+
+    input_tb = ui.Entry(in_pane)
+    input_tb.pack(side=ui.LEFT, fill=ui.X, expand=1, pady=10, padx=10)
+
+    def find_input():
+        fh = fd.askopenfile(filetypes=[(".osu files", "*.osu")])
+
+        input_tb.delete(0, ui.END)
+        input_tb.insert(0, fh.name)
+
+        fh.close()
+
+    input_btn = ui.Button(in_pane, text="choose input file", command=find_input)
+    input_btn.pack(side=ui.RIGHT, pady=10, padx=10)
+
+    diffname_frame = ui.Frame(in_frame)
+    diffname_frame.pack(side=ui.BOTTOM, expand=1, fill=ui.X, padx=10, pady=10)
+
+    diffname = ui.StringVar(value="drgn.hitsounds")
+    out_diffname_lbl = ui.Label(diffname_frame, text="Difficulty name")
+    out_diffname_lbl.pack(side=ui.LEFT, padx=10, pady=10)
+
+    out_diffname = ui.Entry(diffname_frame, textvariable=diffname)
+    out_diffname.pack(side=ui.RIGHT, expand=1, fill=ui.X, padx=10, pady=10)
+
+    # Messages section
+    message_frame = ui.LabelFrame(lr_pane, text="Messages")
+    message_frame.pack(side=ui.RIGHT, expand=1, fill=ui.BOTH)
+
+    message_pane = ui.Frame(message_frame)
+    message_pane.pack(expand=1, fill=ui.BOTH, padx=10, pady=10)
+
+    message_scrollbar = ui.Scrollbar(message_pane)
+    message_scrollbar.pack(expand=1, fill=ui.Y, side=ui.RIGHT)
+
+    messages = ui.Text(message_pane, yscrollcommand= message_scrollbar.set, height=12)
+    messages.pack(expand=1, fill=ui.BOTH, side=ui.LEFT)
+
+    message_scrollbar.config(command=messages.yview)
+
+    # Actions
+    def send_msg(msg):
+        messages.insert(ui.END, msg + "\n")
+
+    def perform_gen():
+        in_fn = input_tb.get()
+        if not os.path.isfile(in_fn):
+            send_msg("couldn't open file {}.".format(in_fn))
+            return
+
+        messages.delete("1.0", ui.END)
+
+        generate(in_fn, diffname.get(), send_msg)
+
+    action_btn = ui.Button(root, text="generate", command=perform_gen)
+    action_btn.pack(side=ui.BOTTOM, pady=10, padx=10, expand=0, fill=ui.X)
+
+    root.mainloop()
