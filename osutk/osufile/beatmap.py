@@ -30,6 +30,9 @@ class Hitsound(object):
 
     @property
     def is_auto(self):
+        """
+        @return: Whether this hitsound had a sample assigned to it or if it was set automatically.
+        """
         return False if len(self.custom_sample) > 4 else self._is_auto
 
     @property
@@ -317,8 +320,8 @@ def read_from_file(filename):
             colors[int(match.group(1))] = Color(r=int(match.group(2)), g=int(match.group(3)), b=int(match.group(4)))
 
     def read_event(events, samples, line):
-        if line.lstrip(chars=' _').startswith("Sample"):
-            entries = line.lstrip(chars=' _').split(',')[1:]
+        if line.lstrip(' _').startswith("Sample"):
+            entries = line.lstrip(' _').split(',')[1:]
             samples.append((int(entries[0]), *entries[1:]))
         else:
             events.append(line)

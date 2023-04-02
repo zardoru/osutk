@@ -2,7 +2,7 @@
 from cx_Freeze import setup, Executable
 
 # Dependencies are automatically detected, but it might need fine tuning.
-build_exe_options = {"packages": ["os"], "excludes": ["tkinter"]}
+build_exe_options = {"packages": ["os", "tkinter"]}
 
 setup(
     name="osutk",
@@ -13,6 +13,7 @@ setup(
     },
     executables=[
         Executable("tools/check_duplicate_hitsounds.py"),
+        Executable("tools/copy_hitsounds.py"),
         Executable("tools/make_hitsound_diff.py")
     ],
     author="Agka"

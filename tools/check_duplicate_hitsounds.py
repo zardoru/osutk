@@ -6,7 +6,7 @@ from osutk.translate import to_osu_time_notation
 
 
 # only checks if additions are duplicate, not normals.
-def check_duplicates(beatmap, time):
+def check_duplicates_at_time(beatmap, time):
     objects = beatmap.get_objects_at_time(time)
 
     if len(objects) == 0:
@@ -49,7 +49,7 @@ def find_all_duplicates(beatmap):
     moments = beatmap.get_distinct_times()
     duplicates = []
     for moment in moments:
-        moment_duplicates = check_duplicates(beatmap, moment)
+        moment_duplicates = check_duplicates_at_time(beatmap, moment)
 
         duplicates.extend(moment_duplicates)
     return duplicates
@@ -83,7 +83,7 @@ def print_results(duplicates, unique_duplicate_times):
         print("{0} - ".format(to_osu_time_notation(t)))
 
 
-def main(filename, should_print_results, should_deduplicate):
+def check_duplicates(filename, should_print_results, should_deduplicate):
     beatmap = read_from_file(filename)
     beatmap.sort_timing_points()
     duplicates = find_all_duplicates(beatmap)
@@ -110,4 +110,4 @@ def main(filename, should_print_results, should_deduplicate):
 
 
 if __name__ == '__main__':
-    main(sys.argv[1], "-p" in sys.argv, "-d" in sys.argv)
+    check_duplicates(sys.argv[1], "-p" in sys.argv, "-d" in sys.argv)
