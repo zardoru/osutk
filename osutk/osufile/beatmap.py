@@ -314,7 +314,7 @@ def read_from_file(filename):
             setattr(area, attribute, value)
 
     def read_color(colors, line):
-        color_regex = "\s*Combo(\d+)\s*:\s*(\d{0,3}),(\d{0,3}),(\d{0,3})\s*"
+        color_regex = r"\s*Combo(\d+)\s*:\s*(\d{0,3}),(\d{0,3}),(\d{0,3})\s*"
         match = re.match(color_regex, line)
         if match is not None:
             colors[int(match.group(1))] = Color(r=int(match.group(2)), g=int(match.group(3)), b=int(match.group(4)))

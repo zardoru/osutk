@@ -3,7 +3,6 @@ import os
 from osutk.osufile.beatmap import read_from_file, write_to_file, Hitsound
 from osutk.objects.hitobject import HitObject, HitCircle
 from shutil import copyfile
-import sys
 
 from osutk.translate import to_osu_time_notation
 

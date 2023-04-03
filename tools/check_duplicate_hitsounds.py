@@ -1,6 +1,7 @@
 import os
+from shutil import copyfile
 
-from osutk.osufile.beatmap import read_from_file, Beatmap
+from osutk.osufile.beatmap import read_from_file, Beatmap, write_to_file
 from osutk.objects.hitobject import HitObject
 import sys
 from itertools import combinations
@@ -79,12 +80,15 @@ def print_results(beatmap: Beatmap, duplicates: list[dupentry], unique_duplicate
 
         ft = to_osu_time_notation(time)
         r = ", ".join(repeat)
+        if len(r) == 0:
+            r = sounds
+
         out = "{0} ({4}|{1},{4}|{2}) - {1} and {2} repeat {3} - Sets: {5}/{6} Custom Set {7}/{8}" \
             .format(ft, l1, l2, r, int(time),
                     beatmap.get_effective_addition_set(o1), beatmap.get_effective_addition_set(o2),
                     o1.custom_set, o2.custom_set)
         msg(out)
-    msg("Unique Duplicates:")
+    msg("Unique Duplicate Times:")
     msg("==========================")
     for t in sorted(unique_duplicate_times):
         msg("{0}".format(to_osu_time_notation(t)))
@@ -111,9 +115,18 @@ def check_duplicates(filename: str, should_print_results: bool, should_deduplica
             duplicates = find_all_duplicates(beatmap)
             # passes = 1
 
-        # print("Deduplicated in {} pass(es)".format(passes))
-        # for x in beatmap.objects:
-        #    print(str(x))
+        base_bak_path = filename + '.bak'
+        bak_path = base_bak_path
+        suffix_index = 0
+        while os.path.exists(bak_path):
+            bak_path = base_bak_path + str(suffix_index)
+            suffix_index += 1
+
+        msg("Backing up original file {} to {}.".format(filename, bak_path))
+        copyfile(filename, bak_path)
+
+        with open(filename, "w") as out:
+            write_to_file(beatmap, out)
 
 
 if __name__ == '__main__':
@@ -183,7 +196,7 @@ if __name__ == '__main__':
     action_btn = ui.Button(root, text="generate", command=perform_gen)
     action_btn.pack(side=ui.BOTTOM, pady=10, padx=10, expand=0, fill=ui.X)
 
-    dry_run = ui.BooleanVar(root, value=False)
+    dry_run = ui.BooleanVar(root, value=True)
     dry_run_cb = ui.Checkbutton(text="Dry run (i.e., do not deduplicate)", variable=dry_run)
     dry_run_cb.pack(side=ui.BOTTOM, expand=0)
 
