@@ -219,7 +219,7 @@ def do_hitsound_copy(filename_src,
         for snd in reminder:
             if snd.is_custom_sample:
                 # there's not a sound at this time with the same sample? add it then
-                sb_sounds_out.add((t, 0, snd.custom_sample))
+                sb_sounds_out.add((int(t), 0, snd.custom_sample))
 
         # at this time we have not accounted for sounds that already exist
         # so add those. to the last time we've used these sounds.

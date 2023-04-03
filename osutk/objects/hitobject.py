@@ -110,7 +110,7 @@ class HitObject(object):
         :return: A string in the x:x:x:x: format.
         """
         if len(self.custom_sample) > 0:
-            s = "0:0:0:{}:{}".format(self.volume, self.custom_sample)
+            s = "0:0:0:{}:{}".format(self.volume, self.custom_sample.strip("\""))
         else:
             s = "{}:{}:{}:{}:".format(self.sample_set,
                                       self.addition_set,

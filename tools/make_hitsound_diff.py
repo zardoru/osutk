@@ -19,7 +19,7 @@ def generate(in_filename: str, diffname: str, msgfn):
         # get all of the distinct sounds at this time
         time_sounds = set(snd for obj in objs for snd in beatmap.get_effective_sounds(obj))
 
-        sb_obj_t = [x for x in beatmap.sb_samples if x[0] == t]
+        sb_obj_t = [x for x in beatmap.sb_samples if int(x[0]) == int(t)]
 
         for x in sb_obj_t:
             time_sounds.add(Hitsound(custom_sample=x[2]))
@@ -68,7 +68,7 @@ def generate(in_filename: str, diffname: str, msgfn):
 
             if sound.is_custom_sample:
                 if lane > 18:
-                    sb_obj.append((t, 0, sound.custom_sample))
+                    sb_obj.append((int(t), 0, sound.custom_sample))
                 else:
                     obj = HitCircle(beatmap.get_mania_lane_x(lane), 240, t, 0)
                     obj.custom_sample = sound.custom_sample

@@ -28,6 +28,9 @@ class Hitsound(object):
         self.custom_sample = custom_sample
         self.obj = obj
 
+        if custom_sample != "":
+            self._is_auto = False
+
     @property
     def is_auto(self):
         """
@@ -250,7 +253,7 @@ class Beatmap(object):
         the sound, soundset and index are all deduced from context.
         """
         if len(obj.custom_sample) > 4:
-            return [Hitsound(custom_sample=obj.custom_sample, obj=obj)]
+            return [Hitsound(custom_sample=obj.custom_sample, obj=obj, is_auto=False)]
 
         if obj.hitsound != 0:  # has an addition
             sounds_list = []
@@ -401,7 +404,17 @@ def write_to_file(beatmap, file_output):
 
     file_output.write("\n[Events]\n")
     file_output.writelines(x + "\n" for x in beatmap.events)
-    file_output.writelines("Sample," + ",".join(str(i) for i in x) + '\n' for x in beatmap.sb_samples)
+    gen = []
+    for x in sorted(beatmap.sb_samples, key=lambda x: x[0]):
+        fn = x[2].strip("\"")
+
+        if len(x) > 3:
+            vol = x[3]
+        else:
+            vol = 100
+        gen.append("{:.0f},{},\"{}\",{}\n".format(x[0], x[1], fn, vol))
+
+    file_output.writelines("Sample," + x for x in gen)
 
     file_output.write("\n[TimingPoints]\n")
     file_output.writelines(str(x) + "\n" for x in beatmap.timing_points)
